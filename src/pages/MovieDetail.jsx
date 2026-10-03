@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import MovieCard from '../components/MovieCard'
-import PersonalMovieEditor from '../components/PersonalMovieEditor'
 import { getBackdropUrl, selectTrailer } from '../services/tmdb.ts'
 import { Link, useParams } from 'react-router-dom'
 import useFetch from '../hooks/useFetch'
 import { poster, year } from '../lib/api'
-import { SaveButton } from '../components/MovieCard'
+import LibraryButtons from '../components/LibraryButtons'
 import { ErrorState, Loading } from '../components/States'
 import Icon from '../components/Icon'
 export default function MovieDetail() {
@@ -108,7 +107,7 @@ export default function MovieDetail() {
               </p>
             )}
             <div className="detail-actions">
-              <SaveButton movie={movie} />
+              <LibraryButtons movie={movie} />
               {trailer && (
                 <a
                   className="button secondary"
@@ -131,7 +130,6 @@ export default function MovieDetail() {
                 ดูข้อมูลเพิ่มเติมที่ TMDB ↗
               </a>
             )}
-            <PersonalMovieEditor movieId={movie.id} />
           </section>
         </div>
         {Boolean(movie.credits?.cast?.length) && (

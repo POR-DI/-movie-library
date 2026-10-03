@@ -6,14 +6,6 @@ import {
   getBackdropUrl,
   selectTrailer,
 } from '../src/services/tmdb.ts'
-import {
-  emptyPortfolio,
-  importLegacy,
-  personalMovie,
-  readPortfolio,
-  storageKey,
-  writePortfolio,
-} from '../src/storage/portfolio.ts'
 import type { MovieDetails, Video } from '../src/types/tmdb.ts'
 const page = { page: 1, total_pages: 1, total_results: 0, results: [] }
 const video = (id: string, official: boolean, type = 'Trailer'): Video => ({
@@ -210,59 +202,4 @@ test('safe image helpers and official trailer priority with video fallback', () 
   )
   assert.equal(selectTrailer([video('clip', true, 'Clip')])?.id, 'clip')
   assert.equal(selectTrailer([video('unsafe?url', true)]), undefined)
-})
-test('personal storage preserves other keys and reloads only IDs and personal fields', () => {
-  const values = new Map([['legacy-user-key', 'preserve-me']])
-  const storage = {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      values.set(key, value)
-    },
-  }
-  const data = emptyPortfolio()
-  data.movies = [
-    {
-      ...personalMovie(27205),
-      status: 'watched',
-      favorite: true,
-      rating: 9,
-      review: 'Loved it',
-      watchedAt: '2026-09-25',
-      playlistIds: ['nolan'],
-    },
-  ]
-  data.playlists = [{ id: 'nolan', name: 'Nolan' }]
-  writePortfolio(storage, 'guest', data)
-  assert.deepEqual(readPortfolio(storage, 'guest'), data)
-  assert.equal(values.get('legacy-user-key'), 'preserve-me')
-  assert.equal(values.get(storageKey('guest'))?.includes('poster_path'), false)
-  assert.equal(readPortfolio(storage, 'other-user').movies.length, 0)
-  values.set(storageKey('broken'), 'broken-json')
-  assert.throws(() => readPortfolio(storage, 'broken'))
-  assert.equal(values.get(storageKey('broken')), 'broken-json')
-  assert.throws(
-    () =>
-      writePortfolio(
-        {
-          setItem: () => {
-            throw new Error('QuotaExceeded')
-          },
-        },
-        'guest',
-        data,
-      ),
-    /บันทึกในเครื่องไม่ได้/,
-  )
-})
-test('legacy import preserves reviews/removals and is idempotent', () => {
-  const data = emptyPortfolio()
-  data.movies = [{ ...personalMovie(1), review: 'Keep review' }]
-  data.removedIds = [2]
-  const imported = importLegacy(data, [1, 2, 3])
-  assert.deepEqual(
-    imported.movies.map((m) => m.tmdbMovieId),
-    [1, 3],
-  )
-  assert.equal(imported.movies[0].review, 'Keep review')
-  assert.equal(importLegacy(imported, [4]), imported)
 })

@@ -2,11 +2,12 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '../context/AuthContext'
+import { usernameAvailable } from '../lib/profiles'
 import { loginSchema, registerSchema } from '../schemas/auth'
 import { Loading } from '../components/States'
 import Icon from '../components/Icon'
 export default function Auth({ register: signUp = false }) {
-  const { user, loading, authenticate } = useAuth()
+  const { user, loading, signUp: createAccount, signIn } = useAuth()
   const [params] = useSearchParams()
   const requested = params.get('next') || '/library'
   const next =
@@ -26,7 +27,11 @@ export default function Auth({ register: signUp = false }) {
   })
   async function submit(values) {
     try {
-      await authenticate(signUp ? 'register' : 'login', values)
+      if (signUp) {
+        if (!(await usernameAvailable(values.username)))
+          return setError('username', { message: 'ชื่อผู้ใช้นี้ถูกใช้แล้ว' })
+        await createAccount(values)
+      } else await signIn(values)
     } catch (error) {
       setError('root', { message: error.message })
     }
@@ -37,11 +42,18 @@ export default function Auth({ register: signUp = false }) {
     ...(signUp
       ? [
           {
-            name: 'name',
-            label: 'ชื่อที่แสดงในห้องสมุด',
+            name: 'displayName',
+            label: 'ชื่อที่แสดง',
             type: 'text',
             auto: 'nickname',
             placeholder: 'ชื่อของคุณ',
+          },
+          {
+            name: 'username',
+            label: 'ชื่อผู้ใช้ (ใช้ในลิงก์โปรไฟล์)',
+            type: 'text',
+            auto: 'username',
+            placeholder: 'เช่น por_01',
           },
         ]
       : []),
@@ -112,11 +124,8 @@ export default function Auth({ register: signUp = false }) {
                 autoComplete={field.auto}
                 placeholder={field.placeholder}
                 maxLength={
-                  field.name === 'name'
-                    ? 30
-                    : field.name === 'email'
-                      ? 254
-                      : 128
+                  { displayName: 50, username: 20, email: 254 }[field.name] ||
+                  128
                 }
                 aria-invalid={Boolean(errors[field.name])}
                 aria-describedby={

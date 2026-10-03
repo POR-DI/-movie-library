@@ -1,0 +1,28 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { readSupabaseConfig } from '../src/lib/supabaseConfig.js'
+
+test('returns null when either variable is missing or blank', () => {
+  assert.equal(readSupabaseConfig({}), null)
+  assert.equal(
+    readSupabaseConfig({ VITE_SUPABASE_URL: 'https://x.supabase.co' }),
+    null,
+  )
+  assert.equal(
+    readSupabaseConfig({
+      VITE_SUPABASE_URL: ' ',
+      VITE_SUPABASE_ANON_KEY: 'k',
+    }),
+    null,
+  )
+})
+
+test('returns trimmed values when both are set', () => {
+  assert.deepEqual(
+    readSupabaseConfig({
+      VITE_SUPABASE_URL: ' https://x.supabase.co ',
+      VITE_SUPABASE_ANON_KEY: ' key ',
+    }),
+    { url: 'https://x.supabase.co', anonKey: 'key' },
+  )
+})

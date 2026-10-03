@@ -10,8 +10,8 @@ import { useAuth } from '../context/AuthContext'
 import { useLibrary } from '../context/LibraryContext'
 import Icon from './Icon'
 export default function Layout() {
-  const { user, logout, loading, error, retry } = useAuth()
-  const { movies } = useLibrary()
+  const { user, profile, signOut: endSession, loading, error } = useAuth()
+  const { likedIds } = useLibrary()
   const [logoutError, setLogoutError] = useState('')
   const [loggingOut, setLoggingOut] = useState(false)
   const navigate = useNavigate(),
@@ -19,7 +19,7 @@ export default function Layout() {
   async function signOut() {
     setLoggingOut(true)
     try {
-      await logout()
+      await endSession()
       navigate('/')
     } catch (error) {
       setLogoutError(error.message)
@@ -47,17 +47,24 @@ export default function Layout() {
             </NavLink>
             <NavLink to="/movies">สำรวจหนัง</NavLink>
             <NavLink to="/library">
-              ห้องสมุดของฉัน <span className="count">{movies.length}</span>
+              ห้องสมุดของฉัน <span className="count">{likedIds.size}</span>
             </NavLink>
           </nav>
           <div className="account-nav">
             {loading ? (
               <span className="muted">กำลังโหลด…</span>
-            ) : user ? (
+            ) : user && profile ? (
               <>
-                <span className="avatar" title={user.name}>
-                  {user.name.slice(0, 1)}
-                </span>
+                <Link
+                  className="avatar"
+                  to={'/u/' + profile.username}
+                  title={'โปรไฟล์ของ ' + profile.display_name}
+                >
+                  {profile.display_name.slice(0, 1)}
+                </Link>
+                <Link className="text-button" to="/settings/profile">
+                  ตั้งค่าโปรไฟล์
+                </Link>
                 <button
                   className="text-button"
                   disabled={loggingOut}
@@ -81,8 +88,7 @@ export default function Layout() {
       </header>
       {(logoutError || error) && (
         <div className="notice error" role="alert">
-          {logoutError || error.message}{' '}
-          {error && <button onClick={retry}>ลองเชื่อมต่อใหม่</button>}
+          {logoutError || error.message}
         </div>
       )}
       <main id="main" key={location.pathname}>

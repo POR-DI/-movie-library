@@ -14,6 +14,10 @@ const paths = {
   arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
   plus: <path d="M12 5v14M5 12h14" />,
   check: <path d="m5 12 4 4L19 6" />,
+  heart: (
+    <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
+  ),
+  bookmark: <path d="M6 3h12v18l-6-4-6 4Z" />,
   star: (
     <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z" />
   ),
