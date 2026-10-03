@@ -1,4 +1,21 @@
 import { z } from 'zod'
+export const normalizeUsername = (value) => value.trim().toLowerCase()
+export const usernameSchema = z
+  .string()
+  .transform(normalizeUsername)
+  .pipe(
+    z
+      .string()
+      .regex(
+        /^[a-z0-9_]{3,20}$/,
+        'ชื่อผู้ใช้ใช้ได้เฉพาะ a–z, 0–9 และ _ ยาว 3–20 ตัว',
+      ),
+  )
+const displayName = z
+  .string()
+  .trim()
+  .min(1, 'กรุณากรอกชื่อที่แสดง')
+  .max(50, 'ชื่อที่แสดงไม่เกิน 50 ตัวอักษร')
 export const loginSchema = z.object({
   email: z
     .email('กรุณากรอกอีเมลให้ถูกต้อง')
@@ -11,14 +28,12 @@ export const loginSchema = z.object({
 })
 export const registerSchema = loginSchema
   .extend({
-    name: z
-      .string()
-      .trim()
-      .min(2, 'ชื่ออย่างน้อย 2 ตัวอักษร')
-      .max(30, 'ชื่อไม่เกิน 30 ตัวอักษร'),
+    username: usernameSchema,
+    displayName,
     confirmPassword: z.string(),
   })
   .refine((values) => values.password === values.confirmPassword, {
     message: 'รหัสผ่านไม่ตรงกัน',
     path: ['confirmPassword'],
   })
+export const profileSchema = z.object({ username: usernameSchema, displayName })
