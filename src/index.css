@@ -1880,3 +1880,14 @@ nav > a:hover {
 .personal-editor .search-box input {
   border: 0;
 }
+
+.settings-form {
+  display: grid;
+  gap: 16px;
+  max-width: 480px;
+  margin-top: 32px;
+}
+.setup-notice pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

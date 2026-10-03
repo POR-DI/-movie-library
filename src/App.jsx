@@ -5,7 +5,8 @@ import Movies from './pages/Movies'
 import MovieDetail from './pages/MovieDetail'
 import Library from './pages/Library'
 import Auth from './pages/Auth'
-import Shared from './pages/Shared'
+import Profile from './pages/Profile'
+import ProfileSettings from './pages/ProfileSettings'
 import { About, NotFound } from './pages/Static'
 export default function App() {
   return (
@@ -17,7 +18,8 @@ export default function App() {
         <Route path="library" element={<Library />} />
         <Route path="login" element={<Auth key="login" />} />
         <Route path="register" element={<Auth key="register" register />} />
-        <Route path="s/:token" element={<Shared />} />
+        <Route path="settings/profile" element={<ProfileSettings />} />
+        <Route path="u/:username" element={<Profile />} />
         <Route path="about" element={<About />} />
         <Route path="*" element={<NotFound />} />
       </Route>
