@@ -1,31 +1,48 @@
-// Optional: PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node tests/browser.mjs
-// All TMDB responses/images are intercepted. No real TMDB credential is used.
+// node --env-file=.env tests/browser.mjs  (after npm run build is not required; uses Vite dev server)
+// Movie data comes from the server's sample catalog. Accounts and library use the real Supabase
+// project in .env; throwaway users are deleted at the end.
+// Optional: PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
 import { createServer } from 'vite'
+import { createClient } from '@supabase/supabase-js'
 import { createApp } from '../server/index.js'
 import { createMovieService } from '../server/movies.js'
-import { demoMovies, genres } from '../server/demo.js'
+
+for (const name of [
+  'VITE_SUPABASE_URL',
+  'VITE_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+])
+  if (!process.env[name]) {
+    console.log(`SKIP browser test: ${name} is not set (nothing was checked)`)
+    process.exit(0)
+  }
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
-const backend = createApp({
-  databasePath: ':memory:',
-  movieService: createMovieService(''),
-})
+const admin = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false } },
+)
+const run = Date.now().toString(36)
+const email = `browser-${run}@example.com`
+const username = 'browser_' + run
+const backend = createApp({ movieService: createMovieService('') })
 await new Promise((resolve, reject) => {
   backend.once('error', reject)
   backend.listen(0, '127.0.0.1', resolve)
 })
 const vite = await createServer({
-  define: {
-    'import.meta.env.VITE_TMDB_TOKEN': JSON.stringify(
-      'browser-test-placeholder',
-    ),
-  },
   server: {
     host: '127.0.0.1',
     port: 0,
     strictPort: false,
-    proxy: { '/api': { target: `http://127.0.0.1:${backend.address().port}`, changeOrigin: false } },
+    proxy: {
+      '/api': {
+        target: `http://127.0.0.1:${backend.address().port}`,
+        changeOrigin: false,
+      },
+    },
   },
 })
 await vite.listen()
@@ -36,99 +53,10 @@ const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
 })
 const page = await context.newPage()
-page.setDefaultTimeout(10000)
-const errors = [],
-  calls = []
-let offline = false,
-  failUpcoming = true,
-  slowSearch = false
+page.setDefaultTimeout(15000)
+const errors = []
 page.on('pageerror', (error) => errors.push(error.message))
-const paginated = (results) => ({
-  page: 1,
-  total_pages: 1,
-  total_results: results.length,
-  results,
-})
-const movies = demoMovies.map((m) => ({
-  ...m,
-  vote_count: 123,
-  popularity: 100,
-  original_language: 'en',
-  original_title: m.title,
-  production_companies: [],
-  production_countries: [],
-}))
 async function intercept(ctx) {
-  await ctx.route('https://api.themoviedb.org/**', async (route) => {
-    const url = new URL(route.request().url())
-    calls.push(url)
-    if (offline) return route.abort('internetdisconnected')
-    const path = url.pathname.replace('/3', '')
-    if (path === '/movie/upcoming' && failUpcoming)
-      return route.fulfill({ status: 503, json: { success: false } })
-    if (path === '/genre/movie/list') return route.fulfill({ json: { genres } })
-    if (/^\/movie\/\d+$/.test(path)) {
-      const movie = movies.find((m) => m.id === Number(path.split('/').at(-1)))
-      if (!movie)
-        return route.fulfill({ status: 404, json: { success: false } })
-      const english = url.searchParams.get('language') === 'en-US'
-      return route.fulfill({
-        json: {
-          ...movie,
-          overview:
-            movie.id === 27205
-              ? english
-                ? 'English fallback overview'
-                : ''
-              : movie.overview,
-          videos: {
-            results: [
-              {
-                id: 'unofficial',
-                key: 'unofficial',
-                site: 'YouTube',
-                type: 'Trailer',
-                official: false,
-              },
-              {
-                id: 'official',
-                key: 'official',
-                site: 'YouTube',
-                type: 'Trailer',
-                official: true,
-              },
-            ],
-          },
-          recommendations: paginated(
-            movies.filter((m) => m.id !== movie.id).slice(0, 6),
-          ),
-          similar: paginated([]),
-          images: { posters: [], backdrops: [], logos: [] },
-        },
-      })
-    }
-    if (path === '/search/movie') {
-      const q = url.searchParams.get('query')
-      if (q === 'slow' && slowSearch) {
-        await new Promise((r) => setTimeout(r, 900))
-        return route
-          .fulfill({
-            json: paginated([{ ...movies[0], title: 'Stale result' }]),
-          })
-          .catch(() => {})
-      }
-      return route.fulfill({
-        json: paginated(
-          movies.filter(
-            (m) =>
-              m.title.toLowerCase().includes(q.toLowerCase()) ||
-              (q === 'อินเซ็ปชั่น' && m.id === 27205),
-          ),
-        ),
-      })
-    }
-    return route.fulfill({ json: paginated(movies) })
-  })
   await ctx.route('https://image.tmdb.org/**', (route) =>
     route.fulfill({
       contentType: 'image/svg+xml',
@@ -140,142 +68,43 @@ async function intercept(ctx) {
   )
 }
 await intercept(context)
+const notFound = 'ไม่พบโปรไฟล์ หรือโปรไฟล์นี้เป็นส่วนตัว'
+// The UI updates optimistically, so wait for Supabase to confirm before a full page navigation
+// (page.goto would otherwise cancel the in-flight write).
+const saved = (method) =>
+  page.waitForResponse(
+    (r) =>
+      r.url().includes('/rest/v1/library_items') &&
+      r.request().method() === method &&
+      r.ok(),
+  )
 try {
-  await page.addInitScript(() => {
-    if (!localStorage.getItem('legacy-test-key'))
-      localStorage.setItem('legacy-test-key', 'preserved')
-  })
+  // Catalog smoke (sample data from the Node server)
   await page.goto(origin)
   await page.locator('.movie-card').first().waitFor()
-  for (const name of ['Popular', 'Top Rated', 'Now Playing']) {
-    await page.getByRole('button', { name, exact: true }).click()
-    await page.locator('.movie-card').first().waitFor()
-  }
-  await page.getByRole('button', { name: 'Upcoming', exact: true }).click()
-  await page.getByRole('heading', { name: 'ยังโหลดข้อมูลไม่ได้' }).waitFor()
-  failUpcoming = false
-  await page.getByRole('button', { name: 'ลองอีกครั้ง', exact: true }).click()
-  await page.locator('.movie-card').first().waitFor()
-  assert.equal(
-    calls.filter((u) => u.pathname === '/3/movie/upcoming').length,
-    2,
-  )
-  await page.getByRole('button', { name: 'Trending', exact: true }).click()
-  await page.locator('.movie-card').first().waitFor()
-  assert.equal(
-    calls.filter((u) => u.pathname === '/3/trending/movie/week').length,
-    1,
-  )
-  await page.screenshot({
-    path: 'test-results/tmdb-home-desktop.png',
-    fullPage: true,
-  })
   await page.goto(origin + '/movies')
-  const search = page.getByLabel('ชื่อภาพยนตร์')
-  const before = calls.filter((u) => u.pathname === '/3/search/movie').length
-  await search.fill('I')
-  await search.fill('Inc')
-  await search.fill('  Inception  ')
-  await page
-    .getByRole('link', { name: 'ดูรายละเอียด Inception', exact: true })
-    .waitFor()
-  assert.equal(
-    calls.filter((u) => u.pathname === '/3/search/movie').length,
-    before + 1,
-  )
-  assert.equal(calls.at(-1).searchParams.get('query'), 'Inception')
-  slowSearch = true
-  await search.fill('slow')
-  await page.waitForTimeout(450)
-  await search.fill('Interstellar')
+  await page.getByLabel('ชื่อภาพยนตร์').fill('Inter')
+  await page.getByLabel('ชื่อภาพยนตร์').press('Enter')
   await page
     .getByRole('link', { name: 'ดูรายละเอียด Interstellar', exact: true })
     .waitFor()
-  await page.waitForTimeout(600)
-  assert.equal(await page.getByText('Stale result', { exact: true }).count(), 0)
-  await search.fill('nothing-matches')
-  await page.getByRole('heading', { name: 'ยังไม่เจอเรื่องที่ค้นหา' }).waitFor()
-  await search.fill('   ')
-  await page.locator('.movie-card').first().waitFor()
-  assert.equal(
-    calls.some(
-      (u) =>
-        u.pathname === '/3/search/movie' &&
-        !u.searchParams.get('query')?.trim(),
-    ),
-    false,
-  )
-  await search.fill('อินเซ็ปชั่น')
-  await page
-    .getByRole('link', { name: 'ดูรายละเอียด Inception', exact: true })
-    .click()
-  await page.getByText('English fallback overview', { exact: true }).waitFor()
-  assert.equal(
-    await page
-      .getByRole('link', { name: 'ดูตัวอย่างหนัง' })
-      .getAttribute('href'),
-    'https://www.youtube.com/watch?v=official',
-  )
-  await page
-    .getByRole('button', { name: 'เพิ่มเข้าห้องสมุด: Inception', exact: true })
-    .click()
-  await page.getByLabel('สถานะ', { exact: true }).selectOption('watched')
-  await page.getByLabel('คะแนนของฉัน').selectOption('9')
-  await page.getByLabel('เรื่องโปรด', { exact: true }).check()
-  await page.getByLabel('วันที่ดู').fill('2026-09-25')
-  await page.getByLabel('รีวิวของฉัน').fill('Personal review')
-  await page.getByLabel('ชื่อเพลย์ลิสต์ใหม่').fill('Nolan')
-  await page
-    .getByRole('button', { name: 'เพิ่มเพลย์ลิสต์', exact: true })
-    .click()
-  await page.getByLabel('Nolan', { exact: true }).waitFor()
-  await page.reload()
-  await page.getByLabel('รีวิวของฉัน').waitFor()
-  assert.equal(
-    await page.getByLabel('รีวิวของฉัน').inputValue(),
-    'Personal review',
-  )
-  assert.equal(await page.getByLabel('คะแนนของฉัน').inputValue(), '9')
-  assert.equal(
-    await page.getByLabel('Nolan', { exact: true }).isChecked(),
-    true,
-  )
-  const stored = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem('cineshelf:portfolio:v1:guest')),
-  )
-  assert.equal(stored.movies[0].tmdbMovieId, 27205)
-  assert.equal('overview' in stored.movies[0], false)
-  assert.equal(
-    await page.evaluate(() => localStorage.getItem('legacy-test-key')),
-    'preserved',
-  )
-  offline = true
-  await page.goto(origin + '/library')
-  await page.locator('.movie-card').waitFor()
-  await page.getByRole('button', { name: 'บันทึกส่วนตัว', exact: true }).click()
-  await page.getByLabel('รีวิวของฉัน').fill('Offline edit')
-  await page.reload()
-  await page.getByRole('button', { name: 'บันทึกส่วนตัว', exact: true }).click()
-  assert.equal(
-    await page.getByLabel('รีวิวของฉัน').inputValue(),
-    'Offline edit',
-  )
-  offline = false
   await page.goto(origin + '/movies/157336')
   await page.locator('.overview').waitFor()
-  assert.match(await page.locator('.overview').innerText(), /เมื่อโลก/)
-  assert.match(
-    await page.locator('.detail-backdrop').getAttribute('style'),
-    /image.tmdb.org/,
-  )
-  await page.waitForFunction(() => {
-    const img = document.querySelector('.detail-poster img')
-    return img?.complete && img.naturalWidth > 0
-  })
-  // Preserve original account, server library, sharing and revocation behavior.
+  // Guest: library buttons lead to login
+  await page
+    .getByRole('link', {
+      name: 'ถูกใจ: Interstellar (ต้องเข้าสู่ระบบ)',
+      exact: true,
+    })
+    .click()
+  await page.waitForURL('**/login?next=%2Fmovies%2F157336')
+  // Register (validation first)
   await page.goto(origin + '/register?next=/movies/157336')
-  await page.getByLabel('ชื่อที่แสดงในห้องสมุด').fill('Cinema Friend')
-  await page.getByLabel('อีเมล', { exact: true }).fill('browser@example.com')
+  await page.getByLabel('ชื่อที่แสดง', { exact: true }).fill('Cinema Friend')
+  await page
+    .getByLabel('ชื่อผู้ใช้ (ใช้ในลิงก์โปรไฟล์)')
+    .fill('Browser_' + run)
+  await page.getByLabel('อีเมล', { exact: true }).fill(email)
   await page.getByLabel('รหัสผ่าน', { exact: true }).fill('screen-test-123')
   await page.getByLabel('ยืนยันรหัสผ่าน', { exact: true }).fill('wrong')
   await page
@@ -289,79 +118,99 @@ try {
     .getByRole('button', { name: 'สร้างบัญชีของฉัน', exact: true })
     .click()
   await page.waitForURL('**/movies/157336')
+  // Like Interstellar, watchlist Inception
+  await Promise.all([
+    saved('POST'),
+    page
+      .getByRole('button', { name: 'ถูกใจ: Interstellar', exact: true })
+      .click(),
+  ])
   await page
-    .getByRole('button', {
-      name: 'เพิ่มเข้าห้องสมุด: Interstellar',
-      exact: true,
-    })
-    .click()
-  await page.waitForFunction(() => {
-    const p = JSON.parse(localStorage.getItem('cineshelf:portfolio:v1:1'))
-    return p?.movies.length === 1 && !p.pendingSync.length
-  })
+    .getByRole('button', { name: 'เลิกถูกใจ: Interstellar', exact: true })
+    .waitFor()
+  await page.goto(origin + '/movies/27205')
+  await Promise.all([
+    saved('POST'),
+    page
+      .getByRole('button', { name: 'เพิ่มในอยากดู: Inception', exact: true })
+      .click(),
+  ])
+  await page
+    .getByRole('button', { name: 'นำออกจากอยากดู: Inception', exact: true })
+    .waitFor()
+  // Persisted in Supabase across reload
   await page.goto(origin + '/library')
-  await page.locator('.movie-card').waitFor()
-  await page.reload()
-  await page.locator('.movie-card').waitFor()
-  await page
-    .getByRole('button', { name: 'เปิดแชร์ห้องสมุด', exact: true })
-    .click()
-  const link = await page.getByLabel('ลิงก์แชร์ห้องสมุด').inputValue()
-  const guest = await browser.newContext()
-  await intercept(guest)
-  const friend = await guest.newPage()
-  await friend.goto(link)
-  await friend
-    .getByRole('heading', { name: 'ห้องสมุดของ Cinema Friend.' })
-    .waitFor()
-  assert.equal(await friend.locator('.movie-card').count(), 1)
-  assert.equal(await friend.locator('.save-icon').count(), 0)
-  await page.getByRole('button', { name: 'ปิดการแชร์', exact: true }).click()
-  await page
-    .getByRole('button', { name: 'เปิดแชร์ห้องสมุด', exact: true })
-    .waitFor()
-  await friend.reload()
-  await friend
-    .getByText('ไม่พบห้องสมุดนี้ หรือเจ้าของปิดการแชร์แล้ว', { exact: true })
-    .waitFor()
-  await guest.close()
-  // Deleting only the new account cache simulates the first import for a pre-existing account.
-  await page.evaluate(() => localStorage.removeItem('cineshelf:portfolio:v1:1'))
   await page.reload()
   await page
     .getByRole('link', { name: 'ดูรายละเอียด Interstellar', exact: true })
     .waitFor()
+  assert.equal(
+    await page.getByRole('link', { name: 'ดูรายละเอียด Inception' }).count(),
+    0,
+  )
+  await page.getByRole('tab', { name: /อยากดู/ }).click()
   await page
-    .getByRole('button', {
-      name: 'นำออกจากห้องสมุด: Interstellar',
-      exact: true,
-    })
-    .click()
+    .getByRole('link', { name: 'ดูรายละเอียด Inception', exact: true })
+    .waitFor()
+  // Owner sees own private profile
+  const profilePath = '/u/' + username
+  await page.goto(origin + profilePath)
+  await page.getByText('ส่วนตัว — มีแค่คุณที่เห็น').waitFor()
+  // Guest cannot see a private profile
+  const guest = await browser.newContext()
+  await intercept(guest)
+  const friend = await guest.newPage()
+  friend.setDefaultTimeout(15000)
+  await friend.goto(origin + profilePath)
+  await friend.getByRole('heading', { name: notFound }).waitFor()
+  // Public → guest sees liked only, read-only, even with an uppercase URL
+  await page.goto(origin + '/settings/profile')
+  await page.getByRole('switch').click()
+  await page
+    .getByRole('switch', { name: 'เปลี่ยนเป็นส่วนตัว' })
+    .waitFor()
+  await friend.goto(origin + '/u/' + username.toUpperCase())
+  await friend
+    .getByRole('heading', { name: 'หนังที่ Cinema Friend ถูกใจ.' })
+    .waitFor()
+  assert.equal(await friend.locator('.movie-card').count(), 1)
+  assert.equal(await friend.getByText('Inception', { exact: true }).count(), 0)
+  assert.equal(await friend.locator('.save-icon').count(), 0)
+  // Back to private → guest loses access immediately
+  await page.getByRole('switch').click()
+  await page.getByRole('switch', { name: 'เปิดเป็นสาธารณะ' }).waitFor()
+  await friend.reload()
+  await friend.getByRole('heading', { name: notFound }).waitFor()
+  await guest.close()
+  // Unlike from the library
+  await page.goto(origin + '/library')
+  await Promise.all([
+    saved('DELETE'),
+    page
+      .getByRole('button', { name: 'เลิกถูกใจ: Interstellar', exact: true })
+      .click(),
+  ])
   await page
     .getByRole('heading', { name: 'ยังไม่มีหนังบนชั้นนี้', exact: true })
     .waitFor()
-  await page.waitForFunction(
-    () =>
-      !JSON.parse(localStorage.getItem('cineshelf:portfolio:v1:1')).pendingSync
-        .length,
-  )
   await page.reload()
   await page
     .getByRole('heading', { name: 'ยังไม่มีหนังบนชั้นนี้', exact: true })
     .waitFor()
+  // Logout → library requires login again
   await page.getByRole('button', { name: 'ออกจากระบบ', exact: true }).click()
   await page.waitForURL(origin + '/')
   await page.goto(origin + '/library')
-  await page
-    .getByRole('link', { name: 'ดูรายละเอียด Inception', exact: true })
-    .waitFor()
+  await page.waitForURL(/\/login\?next=\/library$/)
   for (const width of [390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     for (const path of [
       '/',
       '/movies',
       '/movies/157336',
-      '/library',
+      '/login',
+      '/register',
+      profilePath,
       '/about',
     ]) {
       await page.goto(origin + path)
@@ -379,21 +228,24 @@ try {
   await page.goto(origin)
   await page.locator('.movie-card').first().waitFor()
   await page.screenshot({
-    path: 'test-results/tmdb-home-mobile.png',
+    path: 'test-results/home-mobile.png',
     fullPage: true,
   })
   assert.deepEqual(errors, [])
   console.log(
-    'Browser checks passed (mocked TMDB): five collections/retry/cache, debounce/stale/Thai search/empty, detail/Thai/English fallback/trailer/images, personal fields/playlists/reload/offline, legacy import, account/sharing/revoke/removal, guest isolation, 390/768/1440 layouts, no page errors.',
+    'Browser checks passed (sample catalog, real Supabase): catalog/search/detail, guest→login, register validation, like/watchlist persist across reload, owner private view, guest private/public/liked-only/uppercase URL, revoke, unlike, logout, 390/768/1440 layouts, no page errors.',
   )
 } catch (error) {
   await page.screenshot({
-    path: 'test-results/tmdb-failure.png',
+    path: 'test-results/browser-failure.png',
     fullPage: true,
   })
-  console.log((await page.locator('main').innerText()).slice(-3000))
+  console.log((await page.locator('body').innerText()).slice(-3000))
   throw error
 } finally {
+  const { data } = await admin.auth.admin.listUsers({ perPage: 1000 })
+  for (const u of data?.users || [])
+    if (u.email === email) await admin.auth.admin.deleteUser(u.id)
   await browser.close()
   await vite.close()
   await new Promise((resolve) => backend.close(resolve))

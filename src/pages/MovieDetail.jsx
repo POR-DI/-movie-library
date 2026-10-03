@@ -68,7 +68,7 @@ export default function MovieDetail() {
                 {Number(movie.vote_average || 0).toFixed(1)} / 10
               </span>
               <span>{movie.release_date || year(movie)}</span>
-              <span>{movie.vote_count.toLocaleString()} โหวต</span>
+              <span>{Number(movie.vote_count || 0).toLocaleString()} โหวต</span>
               {movie.runtime > 0 && (
                 <span>
                   {Math.floor(movie.runtime / 60)} ชม. {movie.runtime % 60} นาที
