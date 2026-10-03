@@ -52,85 +52,20 @@ CineShelf เป็นเว็บไซต์เก็บรายชื่อ�
 
 ### Supabase Schema
 
-```sql
--- โปรไฟล์ผูก 1:1 กับ auth.users (อีเมลอยู่ใน auth.users ไม่ซ้ำเก็บที่นี่)
-create table public.profiles (
-  id           uuid primary key references auth.users (id) on delete cascade,
-  username     text not null unique
-               check (username ~ '^[a-z0-9_]{3,20}$'),
-  display_name text not null check (char_length(display_name) between 1 and 50),
-  avatar_url   text,
-  is_public    boolean not null default false,
-  created_at   timestamptz not null default now()
-);
+SQL ฉบับเต็ม (ตาราง trigger RLS และ function) อยู่ที่ `supabase/schema.sql` รันใน SQL Editor ได้ทันที
 
--- รายการหนังของผู้ใช้: kind แยก "ถูกใจ" กับ "อยากดู" ในตารางเดียว
--- เก็บ title/poster_path ไว้ด้วย เพื่อให้หน้าโปรไฟล์แสดงได้โดยไม่ต้องยิง TMDB ทีละเรื่อง
-create table public.library_items (
-  id            bigint generated always as identity primary key,
-  user_id       uuid not null references public.profiles (id) on delete cascade,
-  tmdb_movie_id integer not null,
-  kind          text not null check (kind in ('liked', 'watchlist')),
-  title         text not null,
-  poster_path   text,
-  created_at    timestamptz not null default now(),
-  unique (user_id, tmdb_movie_id, kind)   -- กดซ้ำไม่เกิดรายการซ้ำ
-);
+| ตาราง | คอลัมน์หลัก | หมายเหตุ |
+| ----- | ----------- | -------- |
+| `profiles` | `id` (= `auth.users.id`), `username` (a–z 0–9 _ ยาว 3–20, ไม่ซ้ำ), `display_name`, `avatar_url`, `is_public` (เริ่มต้น `false`) | สร้างอัตโนมัติด้วย trigger ตอนสมัคร · ไม่เก็บอีเมล |
+| `library_items` | `user_id`, `tmdb_movie_id`, `kind` (`liked` / `watchlist`), `title`, `poster_path` | `unique(user_id, tmdb_movie_id, kind)` กดซ้ำไม่เกิดรายการซ้ำ · เก็บชื่อและโปสเตอร์ไว้ให้หน้าโปรไฟล์แสดงได้โดยไม่ต้องเรียก TMDB ทีละเรื่อง |
 
-create index library_items_user_kind_idx
-  on public.library_items (user_id, kind, created_at desc);
+Row Level Security:
 
--- สร้างโปรไฟล์อัตโนมัติเมื่อสมัคร (username/display_name ส่งมาใน options.data ตอน signUp)
-create function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = ''
-as $$
-begin
-  insert into public.profiles (id, username, display_name)
-  values (
-    new.id,
-    new.raw_user_meta_data ->> 'username',
-    coalesce(new.raw_user_meta_data ->> 'display_name', new.raw_user_meta_data ->> 'username')
-  );
-  return new;
-end;
-$$;
+- `profiles` — อ่านได้เมื่อเป็นสาธารณะหรือเป็นของตัวเอง · แก้ได้เฉพาะของตัวเอง และแก้ได้แค่ username, ชื่อที่แสดง, avatar, สาธารณะ/ส่วนตัว
+- `library_items` — เจ้าของเห็นทั้งหมด · คนอื่นเห็นเฉพาะ `liked` ของโปรไฟล์สาธารณะ
+- `library_items` — เพิ่ม/ลบได้เฉพาะของตัวเอง
 
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute function public.handle_new_user();
-
--- Row Level Security
-alter table public.profiles      enable row level security;
-alter table public.library_items enable row level security;
-
--- profiles: ใครก็อ่านโปรไฟล์สาธารณะได้, เจ้าของอ่าน/แก้ของตัวเองได้
-create policy "read public or own profile" on public.profiles
-  for select using (is_public or id = auth.uid());
-
-create policy "update own profile" on public.profiles
-  for update using (id = auth.uid()) with check (id = auth.uid());
-
--- library_items: เจ้าของเห็นทุกอย่าง, คนอื่นเห็นเฉพาะ liked ของโปรไฟล์สาธารณะ
-create policy "read own or public liked" on public.library_items
-  for select using (
-    user_id = auth.uid()
-    or (
-      kind = 'liked'
-      and exists (
-        select 1 from public.profiles p
-        where p.id = library_items.user_id and p.is_public
-      )
-    )
-  );
-
-create policy "insert own items" on public.library_items
-  for insert with check (user_id = auth.uid());
-
-create policy "delete own items" on public.library_items
-  for delete using (user_id = auth.uid());
-```
+`username_available(name)` ให้ฟอร์มสมัครและหน้าตั้งค่าเช็คชื่อซ้ำก่อนส่ง
 
 ## 5. Global State (User State)
 
