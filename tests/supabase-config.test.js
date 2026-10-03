@@ -26,3 +26,12 @@ test('returns trimmed values when both are set', () => {
     { url: 'https://x.supabase.co', anonKey: 'key' },
   )
 })
+
+test('returns null for a URL that createClient would reject', () => {
+  for (const url of ['xxxx.supabase.co', 'ftp://x.supabase.co', 'not a url'])
+    assert.equal(
+      readSupabaseConfig({ VITE_SUPABASE_URL: url, VITE_SUPABASE_ANON_KEY: 'k' }),
+      null,
+      url,
+    )
+})

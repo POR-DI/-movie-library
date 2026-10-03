@@ -155,7 +155,15 @@ try {
   // Owner sees own private profile
   const profilePath = '/u/' + username
   await page.goto(origin + profilePath)
-  await page.getByText('ส่วนตัว — มีแค่คุณที่เห็น').waitFor()
+  const badge = page.getByText('ส่วนตัว — มีแค่คุณที่เห็น')
+  await badge.waitFor()
+  // Thai text must not get letter-spacing and must stay readable
+  const badgeStyle = await badge.evaluate((el) => {
+    const css = getComputedStyle(el)
+    return { spacing: css.letterSpacing, size: parseFloat(css.fontSize) }
+  })
+  assert.equal(badgeStyle.spacing, 'normal', 'Thai badge letter-spacing')
+  assert.ok(badgeStyle.size >= 12, 'Thai badge font-size ' + badgeStyle.size)
   // Guest cannot see a private profile
   const guest = await browser.newContext()
   await intercept(guest)
@@ -182,8 +190,24 @@ try {
   await friend.reload()
   await friend.getByRole('heading', { name: notFound }).waitFor()
   await guest.close()
-  // Unlike from the library
+  // A failed unlike on the library page must come back with a visible message
   await page.goto(origin + '/library')
+  await page.route('**/rest/v1/library_items**', (route) =>
+    route.request().method() === 'DELETE' ? route.abort() : route.continue(),
+  )
+  await page
+    .getByRole('button', { name: 'เลิกถูกใจ: Interstellar', exact: true })
+    .click()
+  await page
+    .getByRole('alert')
+    .filter({ hasText: 'Interstellar' })
+    .filter({ hasText: 'ไม่สำเร็จ' })
+    .waitFor()
+  await page
+    .getByRole('link', { name: 'ดูรายละเอียด Interstellar', exact: true })
+    .waitFor()
+  await page.unroute('**/rest/v1/library_items**')
+  // Unlike from the library
   await Promise.all([
     saved('DELETE'),
     page

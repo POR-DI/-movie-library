@@ -11,7 +11,7 @@ import { useLibrary } from '../context/LibraryContext'
 import Icon from './Icon'
 export default function Layout() {
   const { user, profile, signOut: endSession, loading, error } = useAuth()
-  const { likedIds } = useLibrary()
+  const { likedIds, toggleError, dismissToggleError } = useLibrary()
   const [logoutError, setLogoutError] = useState('')
   const [loggingOut, setLoggingOut] = useState(false)
   const navigate = useNavigate(),
@@ -89,6 +89,11 @@ export default function Layout() {
       {(logoutError || error) && (
         <div className="notice error" role="alert">
           {logoutError || error.message}
+        </div>
+      )}
+      {toggleError && (
+        <div className="notice error" role="alert">
+          {toggleError} <button onClick={dismissToggleError}>ปิด</button>
         </div>
       )}
       <main id="main" key={location.pathname}>

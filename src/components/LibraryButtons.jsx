@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useLibrary } from '../context/LibraryContext'
@@ -23,7 +22,6 @@ export default function LibraryButtons({ movie, compact = false }) {
   const { user } = useAuth()
   const { has, isPending, toggle, loading } = useLibrary()
   const location = useLocation()
-  const [error, setError] = useState('')
   const wrap = compact ? 'save-wrap compact' : 'save-wrap'
   const cls = (active) =>
     compact
@@ -45,14 +43,6 @@ export default function LibraryButtons({ movie, compact = false }) {
         ))}
       </div>
     )
-  async function press(kind) {
-    setError('')
-    try {
-      await toggle(movie, kind)
-    } catch (err) {
-      setError(err.message)
-    }
-  }
   return (
     <div className={wrap}>
       {kinds.map(({ kind, icon, on, off, label }) => {
@@ -64,18 +54,13 @@ export default function LibraryButtons({ movie, compact = false }) {
             aria-label={(active ? on : off) + ': ' + movie.title}
             aria-pressed={active}
             disabled={loading || isPending(movie.id, kind)}
-            onClick={() => press(kind)}
+            onClick={() => toggle(movie, kind)}
           >
             <Icon name={icon} />
             {!compact && (active ? label : off)}
           </button>
         )
       })}
-      {error && (
-        <small className="field-error" role="alert">
-          {error}
-        </small>
-      )}
     </div>
   )
 }

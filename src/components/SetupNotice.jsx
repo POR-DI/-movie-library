@@ -2,6 +2,7 @@ export default function SetupNotice() {
   return (
     <main className="page setup-notice">
       <h1>ยังไม่ได้ตั้งค่า Supabase</h1>
+      <p>ยังไม่มีค่า หรือ URL ไม่ถูกต้อง (ต้องขึ้นต้นด้วย https://)</p>
       <p>
         ใส่ค่าต่อไปนี้ในไฟล์ <code>.env</code> ที่โฟลเดอร์โปรเจกต์ แล้วหยุดและรัน{' '}
         <code>npm run dev</code> ใหม่

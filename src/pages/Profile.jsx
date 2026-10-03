@@ -46,9 +46,11 @@ export default function Profile() {
     <div className="page inner-page">
       <div className="shared-label">
         <Icon name="share" size={16} />{' '}
-        {own && !profile.is_public
-          ? 'ส่วนตัว — มีแค่คุณที่เห็น'
-          : 'SHARED PROFILE'}
+        {own && !profile.is_public ? (
+          <span className="thai-label">ส่วนตัว — มีแค่คุณที่เห็น</span>
+        ) : (
+          'SHARED PROFILE'
+        )}
       </div>
       <div className="page-heading">
         <span className="eyebrow">@{profile.username}</span>

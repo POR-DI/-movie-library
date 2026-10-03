@@ -1891,3 +1891,9 @@ nav > a:hover {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+/* .shared-label spaces out English caps; Thai marks break apart with letter-spacing */
+.thai-label {
+  letter-spacing: normal;
+  font-size: 12px;
+  line-height: 1.6;
+}

@@ -19,6 +19,8 @@ export function LibraryProvider({ children }) {
   const [error, setError] = useState(null)
   const [pending, setPending] = useState(() => new Set())
   const [attempt, setAttempt] = useState(0)
+  // Kept here, not in the button: a failed unlike on /library unmounts the card that pressed it.
+  const [toggleError, setToggleError] = useState('')
   function commit(next) {
     latest.current = next
     setItems(next)
@@ -52,6 +54,7 @@ export function LibraryProvider({ children }) {
     if (!user) throw new Error('กรุณาเข้าสู่ระบบก่อน')
     const k = key(movie.id, kind)
     if (pending.has(k)) return
+    setToggleError('')
     setPending((old) => new Set(old).add(k))
     // Optimistic: show the change now, undo only this toggle if Supabase rejects it.
     const result = applyToggle(latest.current, movie, kind, user.id)
@@ -71,7 +74,13 @@ export function LibraryProvider({ children }) {
     })
     if (error) {
       commit(revertToggle(latest.current, result))
-      throw new Error(toThaiMessage(error))
+      const verb = {
+        liked: ['ถูกใจ', 'เลิกถูกใจ'],
+        watchlist: ['เพิ่มในอยากดู', 'นำออกจากอยากดู'],
+      }[kind][result.action === 'insert' ? 0 : 1]
+      setToggleError(
+        `${verb} ${movie.title} ไม่สำเร็จ: ${toThaiMessage(error)}`,
+      )
     }
   }
   return (
@@ -83,10 +92,11 @@ export function LibraryProvider({ children }) {
         loading,
         error,
         retry: () => setAttempt((v) => v + 1),
-        has: (id, kind) =>
-          (kind === 'liked' ? likedIds : watchlistIds).has(id),
+        has: (id, kind) => (kind === 'liked' ? likedIds : watchlistIds).has(id),
         isPending: (id, kind) => pending.has(key(id, kind)),
         toggle,
+        toggleError,
+        dismissToggleError: () => setToggleError(''),
       }}
     >
       {children}
