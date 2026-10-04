@@ -6,7 +6,7 @@ import { createMovieService, HttpError } from './movies.js'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 
-export function createApp({
+export function createHandler({
   movieService = createMovieService(
     process.env.TMDB_READ_TOKEN,
     process.env.TMDB_API_KEY,
@@ -24,7 +24,7 @@ export function createApp({
     if (entry.count > 240)
       throw new HttpError(429, 'มีคำขอมากเกินไป กรุณารอประมาณหนึ่งนาที')
   }
-  const server = createServer(async (req, res) => {
+  return async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff')
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
     res.setHeader('X-Frame-Options', 'DENY')
@@ -94,8 +94,10 @@ export function createApp({
         })
       else res.end()
     }
-  })
-  return server
+  }
+}
+export function createApp(options) {
+  return createServer(createHandler(options))
 }
 if (
   process.argv[1] &&
