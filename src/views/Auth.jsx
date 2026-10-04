@@ -1,4 +1,8 @@
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+'use client'
+
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import Redirect from '../components/Redirect'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '../context/AuthContext'
@@ -8,7 +12,7 @@ import { Loading } from '../components/States'
 import Icon from '../components/Icon'
 export default function Auth({ register: signUp = false }) {
   const { user, loading, signUp: createAccount, signIn } = useAuth()
-  const [params] = useSearchParams()
+  const params = useSearchParams()
   const requested = params.get('next') || '/library'
   const next =
     /^\/(?!\/)/.test(requested) &&
@@ -37,7 +41,7 @@ export default function Auth({ register: signUp = false }) {
     }
   }
   if (loading) return <Loading />
-  if (user) return <Navigate to={next} replace />
+  if (user) return <Redirect to={next} />
   const fields = [
     ...(signUp
       ? [
@@ -157,7 +161,7 @@ export default function Auth({ register: signUp = false }) {
         <p className="auth-switch">
           {signUp ? 'มีบัญชีแล้ว?' : 'ยังไม่มีห้องสมุดของตัวเอง?'}{' '}
           <Link
-            to={
+            href={
               (signUp ? '/login' : '/register') +
               '?next=' +
               encodeURIComponent(next)

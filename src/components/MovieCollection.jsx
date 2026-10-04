@@ -1,3 +1,5 @@
+'use client'
+
 import useFetch from '../hooks/useFetch'
 import MovieCard from './MovieCard'
 import { Empty, ErrorState, Loading } from './States'

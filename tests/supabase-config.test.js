@@ -5,13 +5,13 @@ import { readSupabaseConfig } from '../src/lib/supabaseConfig.js'
 test('returns null when either variable is missing or blank', () => {
   assert.equal(readSupabaseConfig({}), null)
   assert.equal(
-    readSupabaseConfig({ VITE_SUPABASE_URL: 'https://x.supabase.co' }),
+    readSupabaseConfig({ NEXT_PUBLIC_SUPABASE_URL: 'https://x.supabase.co' }),
     null,
   )
   assert.equal(
     readSupabaseConfig({
-      VITE_SUPABASE_URL: ' ',
-      VITE_SUPABASE_ANON_KEY: 'k',
+      NEXT_PUBLIC_SUPABASE_URL: ' ',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'k',
     }),
     null,
   )
@@ -20,8 +20,8 @@ test('returns null when either variable is missing or blank', () => {
 test('returns trimmed values when both are set', () => {
   assert.deepEqual(
     readSupabaseConfig({
-      VITE_SUPABASE_URL: ' https://x.supabase.co ',
-      VITE_SUPABASE_ANON_KEY: ' key ',
+      NEXT_PUBLIC_SUPABASE_URL: ' https://x.supabase.co ',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ' key ',
     }),
     { url: 'https://x.supabase.co', anonKey: 'key' },
   )
@@ -30,7 +30,7 @@ test('returns trimmed values when both are set', () => {
 test('returns null for a URL that createClient would reject', () => {
   for (const url of ['xxxx.supabase.co', 'ftp://x.supabase.co', 'not a url'])
     assert.equal(
-      readSupabaseConfig({ VITE_SUPABASE_URL: url, VITE_SUPABASE_ANON_KEY: 'k' }),
+      readSupabaseConfig({ NEXT_PUBLIC_SUPABASE_URL: url, NEXT_PUBLIC_SUPABASE_ANON_KEY: 'k' }),
       null,
       url,
     )

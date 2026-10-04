@@ -1,26 +1,37 @@
+'use client'
+
 import { useState } from 'react'
-import {
-  Link,
-  NavLink,
-  Outlet,
-  useLocation,
-  useNavigate,
-} from 'react-router-dom'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
 import { useLibrary } from '../context/LibraryContext'
 import Icon from './Icon'
-export default function Layout() {
+// react-router's NavLink set class "active"; index.css styles nav > a.active.
+function NavItem({ href, end = false, children }) {
+  const pathname = usePathname()
+  const active = end ? pathname === href : pathname.startsWith(href)
+  return (
+    <Link
+      href={href}
+      className={active ? 'active' : undefined}
+      aria-current={active ? 'page' : undefined}
+    >
+      {children}
+    </Link>
+  )
+}
+export default function SiteShell({ children }) {
   const { user, profile, signOut: endSession, loading, error } = useAuth()
   const { likedIds, toggleError, dismissToggleError } = useLibrary()
   const [logoutError, setLogoutError] = useState('')
   const [loggingOut, setLoggingOut] = useState(false)
-  const navigate = useNavigate(),
-    location = useLocation()
+  const router = useRouter()
+  const pathname = usePathname()
   async function signOut() {
     setLoggingOut(true)
     try {
       await endSession()
-      navigate('/')
+      router.push('/')
     } catch (error) {
       setLogoutError(error.message)
     } finally {
@@ -34,7 +45,7 @@ export default function Layout() {
       </a>
       <header className="site-header">
         <div className="nav-inner">
-          <Link to="/" className="brand">
+          <Link href="/" className="brand">
             <span className="brand-icon">
               <Icon name="film" size={22} />
             </span>
@@ -42,13 +53,13 @@ export default function Layout() {
             <span className="brand-dot">.</span>
           </Link>
           <nav aria-label="เมนูหลัก">
-            <NavLink to="/" end>
+            <NavItem href="/" end>
               หน้าแรก
-            </NavLink>
-            <NavLink to="/movies">สำรวจหนัง</NavLink>
-            <NavLink to="/library">
+            </NavItem>
+            <NavItem href="/movies">สำรวจหนัง</NavItem>
+            <NavItem href="/library">
               ห้องสมุดของฉัน <span className="count">{likedIds.size}</span>
-            </NavLink>
+            </NavItem>
           </nav>
           <div className="account-nav">
             {loading ? (
@@ -57,12 +68,12 @@ export default function Layout() {
               <>
                 <Link
                   className="avatar"
-                  to={'/u/' + profile.username}
+                  href={'/u/' + profile.username}
                   title={'โปรไฟล์ของ ' + profile.display_name}
                 >
                   {profile.display_name.slice(0, 1)}
                 </Link>
-                <Link className="text-button" to="/settings/profile">
+                <Link className="text-button" href="/settings/profile">
                   ตั้งค่าโปรไฟล์
                 </Link>
                 <button
@@ -75,10 +86,10 @@ export default function Layout() {
               </>
             ) : (
               <>
-                <Link className="login-link" to="/login">
+                <Link className="login-link" href="/login">
                   เข้าสู่ระบบ
                 </Link>
-                <Link className="button primary small" to="/register">
+                <Link className="button primary small" href="/register">
                   สร้างห้องสมุด <Icon name="arrow" size={16} />
                 </Link>
               </>
@@ -96,19 +107,19 @@ export default function Layout() {
           {toggleError} <button onClick={dismissToggleError}>ปิด</button>
         </div>
       )}
-      <main id="main" key={location.pathname}>
-        <Outlet />
+      <main id="main" key={pathname}>
+        {children}
       </main>
       <footer className="site-footer">
         <div>
-          <Link to="/" className="brand footer-brand">
+          <Link href="/" className="brand footer-brand">
             CineShelf<span className="brand-dot">.</span>
           </Link>
           <p>ทุกเรื่องที่รัก มีที่อยู่บนชั้นของคุณ</p>
         </div>
         <div className="footer-right">
           <span>MADE FOR THE LOVE OF CINEMA</span>
-          <Link to="/about">เกี่ยวกับเว็บและแหล่งข้อมูล ↗</Link>
+          <Link href="/about">เกี่ยวกับเว็บและแหล่งข้อมูล ↗</Link>
         </div>
       </footer>
     </>

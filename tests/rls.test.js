@@ -2,12 +2,12 @@ import { describe, test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { createClient } from '@supabase/supabase-js'
 
-const url = process.env.VITE_SUPABASE_URL
-const anonKey = process.env.VITE_SUPABASE_ANON_KEY
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const skip =
   !(url && anonKey && serviceKey) &&
-  'ยังไม่ได้ตรวจ RLS: ตั้ง VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY ใน .env'
+  'ยังไม่ได้ตรวจ RLS: ตั้ง NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY ใน .env'
 const opts = { auth: { persistSession: false, autoRefreshToken: false } }
 
 describe('Supabase RLS', { skip }, () => {

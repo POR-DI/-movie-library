@@ -1,4 +1,7 @@
-import { Link, useNavigate } from 'react-router-dom'
+'use client'
+
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import useFetch from '../hooks/useFetch'
 import MovieCollection from '../components/MovieCollection'
@@ -8,10 +11,10 @@ export default function Home() {
   const [category, setCategory] = useState('trending')
   const { data: featured } = useFetch('/api/movies/157336')
   const [query, setQuery] = useState('')
-  const navigate = useNavigate()
+  const router = useRouter()
   function search(event) {
     event.preventDefault()
-    navigate(
+    router.push(
       '/movies' +
         (query.trim() ? '?q=' + encodeURIComponent(query.trim()) : ''),
     )
@@ -61,7 +64,7 @@ export default function Home() {
             สำหรับรสนิยมของคุณ
           </div>
         </div>
-        <Link to="/movies/157336" className="hero-caption">
+        <Link href="/movies/157336" className="hero-caption">
           <span className="hero-caption-label">ON THE BIG SCREEN</span>
           <strong>{featured?.original_title || 'CINESHELF'}</strong>
           <span>
@@ -83,7 +86,7 @@ export default function Home() {
               <span className="accent">.</span>
             </h2>
           </div>
-          <Link className="text-link" to="/movies">
+          <Link className="text-link" href="/movies">
             สำรวจหนังทั้งหมด <Icon name="arrow" size={18} />
           </Link>
         </div>
@@ -116,7 +119,7 @@ export default function Home() {
           <h2>หนังที่ชอบ บอกความเป็นคุณ</h2>
           <p>สร้างห้องสมุดของคุณ แล้วส่งต่อเรื่องราวดี ๆ ให้เพื่อน</p>
         </div>
-        <Link to="/library" className="button secondary">
+        <Link href="/library" className="button secondary">
           ไปที่ห้องสมุดของฉัน <Icon name="arrow" />
         </Link>
       </section>

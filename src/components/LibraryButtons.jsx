@@ -1,4 +1,7 @@
-import { Link, useLocation } from 'react-router-dom'
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
 import { useLibrary } from '../context/LibraryContext'
 import Icon from './Icon'
@@ -21,7 +24,7 @@ const kinds = [
 export default function LibraryButtons({ movie, compact = false }) {
   const { user } = useAuth()
   const { has, isPending, toggle, loading } = useLibrary()
-  const location = useLocation()
+  const pathname = usePathname()
   const wrap = compact ? 'save-wrap compact' : 'save-wrap'
   const cls = (active) =>
     compact
@@ -34,7 +37,7 @@ export default function LibraryButtons({ movie, compact = false }) {
           <Link
             key={kind}
             className={cls(false)}
-            to={'/login?next=' + encodeURIComponent(location.pathname)}
+            href={'/login?next=' + encodeURIComponent(pathname)}
             aria-label={off + ': ' + movie.title + ' (ต้องเข้าสู่ระบบ)'}
           >
             <Icon name={icon} />

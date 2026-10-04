@@ -1,7 +1,10 @@
+'use client'
+
 import { useState } from 'react'
 import MovieCard from '../components/MovieCard'
 import { getBackdropUrl, selectTrailer } from '../services/tmdb.ts'
-import { Link, useParams } from 'react-router-dom'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import useFetch from '../hooks/useFetch'
 import { poster, year } from '../lib/api'
 import LibraryButtons from '../components/LibraryButtons'
@@ -21,7 +24,7 @@ export default function MovieDetail() {
     return (
       <div className="page">
         <ErrorState error={error} retry={error.status === 404 ? null : retry} />
-        <Link className="text-link" to="/movies">
+        <Link className="text-link" href="/movies">
           ← กลับไปสำรวจหนัง
         </Link>
       </div>
@@ -41,7 +44,7 @@ export default function MovieDetail() {
         />
       )}
       <div className="page detail-content">
-        <Link className="text-link back-link" to="/movies">
+        <Link className="text-link back-link" href="/movies">
           ← กลับไปสำรวจหนัง
         </Link>
         <div className="detail-grid">
@@ -80,7 +83,7 @@ export default function MovieDetail() {
                 <Link
                   className="chip"
                   key={genre.id}
-                  to={'/movies?genre=' + genre.id}
+                  href={'/movies?genre=' + genre.id}
                 >
                   {genre.name}
                 </Link>

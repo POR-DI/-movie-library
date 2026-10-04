@@ -1,5 +1,8 @@
+'use client'
+
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import Link from 'next/link'
+import Redirect from '../components/Redirect'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '../context/AuthContext'
@@ -24,7 +27,7 @@ export default function ProfileSettings() {
       : undefined,
   })
   if (loading) return <Loading />
-  if (!user) return <Navigate to="/login?next=/settings/profile" replace />
+  if (!user) return <Redirect to="/login?next=/settings/profile" />
   if (!profile)
     return <ErrorState error={new Error('โหลดโปรไฟล์ไม่ได้ กรุณารีเฟรช')} />
   const link = window.location.origin + '/u/' + profile.username
@@ -109,7 +112,7 @@ export default function ProfileSettings() {
             readOnly
             onFocus={(e) => e.target.select()}
           />
-          <Link className="text-link" to={'/u/' + profile.username}>
+          <Link className="text-link" href={'/u/' + profile.username}>
             ดูหน้าโปรไฟล์ ↗
           </Link>
         </div>

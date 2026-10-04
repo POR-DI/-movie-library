@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom'
+'use client'
+
+import Link from 'next/link'
 import { useState } from 'react'
 import { poster, year } from '../lib/api'
 import Icon from './Icon'
@@ -9,7 +11,7 @@ export default function MovieCard({ movie, readOnly = false }) {
     <article className="movie-card">
       <div className="poster-wrap">
         <Link
-          to={'/movies/' + movie.id}
+          href={'/movies/' + movie.id}
           className="poster-link"
           aria-label={'ดูรายละเอียด ' + movie.title}
         >
@@ -35,7 +37,7 @@ export default function MovieCard({ movie, readOnly = false }) {
         )}
         {!readOnly && <LibraryButtons movie={movie} compact />}
       </div>
-      <Link className="movie-title" to={'/movies/' + movie.id}>
+      <Link className="movie-title" href={'/movies/' + movie.id}>
         {movie.title}
       </Link>
       {movie.release_date !== undefined && (

@@ -1,11 +1,16 @@
+'use client'
+
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useRouter, useSearchParams } from 'next/navigation'
 import useFetch from '../hooks/useFetch'
 import MovieCard from '../components/MovieCard'
 import { Empty, ErrorState, Loading } from '../components/States'
 import Icon from '../components/Icon'
 export default function Movies() {
-  const [params, setParams] = useSearchParams()
+  const params = useSearchParams()
+  const router = useRouter()
+  const setParams = (next) =>
+    router.replace('/movies' + (next.size ? '?' + next : ''), { scroll: false })
   const q = params.get('q') || '',
     genre = params.get('genre') || '',
     sort = params.get('sort') || 'popular'
@@ -20,10 +25,10 @@ export default function Movies() {
       next.delete('sort')
       if (draft.trim()) next.set('q', draft.trim())
       else next.delete('q')
-      setParams(next, { replace: true })
+      setParams(next)
     }, 400)
     return () => clearTimeout(timer)
-  }, [draft, q, params, setParams])
+  }, [draft, q, params])
   const searching = draft.trim() !== q
   const page = Math.max(1, Math.min(500, parseInt(params.get('page')) || 1))
   const query = new URLSearchParams({
@@ -43,7 +48,7 @@ export default function Movies() {
       if (value) next.set(key, value)
       else next.delete(key)
     }
-    setParams(next, { replace: true })
+    setParams(next)
   }
   function search(event) {
     event.preventDefault()

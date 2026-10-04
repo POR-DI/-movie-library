@@ -1,5 +1,8 @@
+'use client'
+
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import Link from 'next/link'
+import Redirect from '../components/Redirect'
 import { useAuth } from '../context/AuthContext'
 import { useLibrary } from '../context/LibraryContext'
 import { itemToMovie } from '../lib/library'
@@ -16,7 +19,7 @@ export default function Library() {
   const [tab, setTab] = useState('liked')
   const [query, setQuery] = useState('')
   if (authLoading) return <Loading />
-  if (!user) return <Navigate to="/login?next=/library" replace />
+  if (!user) return <Redirect to="/login?next=/library" />
   if (!profile)
     return <ErrorState error={new Error('โหลดโปรไฟล์ไม่ได้ กรุณารีเฟรช')} />
   const inTab = items.filter((i) => i.kind === tab)
@@ -33,7 +36,7 @@ export default function Library() {
           </h1>
           <p>
             เพื่อนเห็นเฉพาะแท็บ “ถูกใจ” เมื่อโปรไฟล์เป็นสาธารณะ ·{' '}
-            <Link className="text-link" to="/settings/profile">
+            <Link className="text-link" href="/settings/profile">
               {profile.is_public ? 'สาธารณะ' : 'ส่วนตัว'} — ตั้งค่าการแชร์
             </Link>
           </p>

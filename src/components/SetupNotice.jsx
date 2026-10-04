@@ -8,8 +8,8 @@ export default function SetupNotice() {
         <code>npm run dev</code> ใหม่
       </p>
       <pre>
-        VITE_SUPABASE_URL=https://xxxx.supabase.co{'\n'}
-        VITE_SUPABASE_ANON_KEY=eyJ...
+        NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co{'\n'}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
       </pre>
       <p>ขั้นตอนสร้างโปรเจกต์อยู่ใน README หัวข้อ “ตั้งค่า Supabase”</p>
     </main>

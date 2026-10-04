@@ -7,20 +7,21 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/dev.js",
-    "build": "vite build",
-    "start": "node --env-file-if-exists=.env --env-file-if-exists=.env.local server/index.js",
+    "dev": "next dev -p 5175",
+    "build": "next build",
+    "start": "next start",
     "test": "node --env-file-if-exists=.env --test tests/*.test.js tests/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
     "@supabase/supabase-js": "^2.117.2",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.3",
+    "next": "^16.3.8",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.88.0",
-    "react-router-dom": "^7.18.3",
+    "server-only": "^0.0.1",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.5"
   },
@@ -28,8 +29,6 @@
     "@types/node": "^26.6.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.1.0",
-    "typescript": "^7.0.2",
-    "vite": "^8.2.2"
+    "typescript": "^7.0.2"
   }
 }

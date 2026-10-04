@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom'
+import Link from 'next/link'
 export function NotFound() {
   return (
     <div className="empty not-found">
       <span className="eyebrow">404 · SCENE NOT FOUND</span>
       <h1>ดูเหมือนจะหลงโรงแล้ว</h1>
       <p>ไม่พบหน้าที่คุณกำลังมองหา</p>
-      <Link to="/" className="button primary">
+      <Link href="/" className="button primary">
         กลับหน้าแรก
       </Link>
     </div>
