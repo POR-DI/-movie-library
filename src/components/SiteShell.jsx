@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
@@ -27,17 +27,19 @@ export default function SiteShell({ children }) {
   const [loggingOut, setLoggingOut] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  async function signOut() {
+  function signOut() {
+    setLogoutError('')
     setLoggingOut(true)
-    try {
-      await endSession()
-      router.push('/')
-    } catch (error) {
-      setLogoutError(error.message)
-    } finally {
-      setLoggingOut(false)
-    }
+    router.push('/')
   }
+  // Sign out only once "/" is showing: signing out on /library first would let its
+  // login redirect race (and beat) the navigation home.
+  useEffect(() => {
+    if (!loggingOut || pathname !== '/') return
+    endSession()
+      .catch((error) => setLogoutError(error.message))
+      .finally(() => setLoggingOut(false))
+  }, [loggingOut, pathname])
   return (
     <>
       <a className="skip-link" href="#main">

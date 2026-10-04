@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import Redirect from '../components/Redirect'
+import { safeNext } from '../lib/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '../context/AuthContext'
@@ -13,13 +14,7 @@ import Icon from '../components/Icon'
 export default function Auth({ register: signUp = false }) {
   const { user, loading, signUp: createAccount, signIn } = useAuth()
   const params = useSearchParams()
-  const requested = params.get('next') || '/library'
-  const next =
-    /^\/(?!\/)/.test(requested) &&
-    !requested.includes('\\') &&
-    !/^\/(login|register)(?:[/?#]|$)/.test(requested)
-      ? requested
-      : '/library'
+  const next = safeNext(params.get('next'))
   const {
     register,
     handleSubmit,

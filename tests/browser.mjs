@@ -1,17 +1,16 @@
-// node --env-file=.env tests/browser.mjs  (after npm run build is not required; uses Vite dev server)
+// node --env-file=.env tests/browser.mjs  (starts next dev itself; stop npm run dev first)
 // Movie data comes from the server's sample catalog. Accounts and library use the real Supabase
 // project in .env; throwaway users are deleted at the end.
 // Optional: PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
-import { createServer } from 'vite'
+import { spawn } from 'node:child_process'
+import { createServer as createNetServer } from 'node:net'
 import { createClient } from '@supabase/supabase-js'
-import { createApp } from '../server/index.js'
-import { createMovieService } from '../server/movies.js'
 
 for (const name of [
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
 ])
   if (!process.env[name]) {
@@ -20,33 +19,55 @@ for (const name of [
   }
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const admin = createClient(
-  process.env.VITE_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   { auth: { persistSession: false, autoRefreshToken: false } },
 )
 const run = Date.now().toString(36)
 const email = `browser-${run}@example.com`
 const username = 'browser_' + run
-const backend = createApp({ movieService: createMovieService('') })
-await new Promise((resolve, reject) => {
-  backend.once('error', reject)
-  backend.listen(0, '127.0.0.1', resolve)
+const port = await new Promise((resolve, reject) => {
+  const probe = createNetServer().once('error', reject)
+  probe.listen(0, '127.0.0.1', () => {
+    const { port } = probe.address()
+    probe.close(() => resolve(port))
+  })
 })
-const vite = await createServer({
-  server: {
-    host: '127.0.0.1',
-    port: 0,
-    strictPort: false,
-    proxy: {
-      '/api': {
-        target: `http://127.0.0.1:${backend.address().port}`,
-        changeOrigin: false,
-      },
-    },
-  },
-})
-await vite.listen()
-const origin = `http://127.0.0.1:${vite.httpServer.address().port}`
+const origin = `http://127.0.0.1:${port}`
+// Sample catalog keeps movie data deterministic; Supabase is the real project from .env.
+const next = spawn(
+  process.execPath,
+  [
+    'node_modules/next/dist/bin/next',
+    'dev',
+    '-p',
+    String(port),
+    '-H',
+    '127.0.0.1',
+  ],
+  { env: { ...process.env, CINESHELF_SAMPLE_CATALOG: '1' }, stdio: 'inherit' },
+)
+const deadline = Date.now() + 60000
+for (;;) {
+  try {
+    if ((await fetch(origin + '/api/config')).ok) break
+  } catch {}
+  if (Date.now() > deadline) throw new Error('next dev did not start in 60s')
+  await new Promise((resolve) => setTimeout(resolve, 500))
+}
+// Compile every route once so the 15s page timeouts measure the app, not the first compile.
+for (const path of [
+  '/',
+  '/movies',
+  '/movies/157336',
+  '/login',
+  '/register',
+  '/library',
+  '/settings/profile',
+  '/u/x',
+  '/about',
+])
+  await fetch(origin + path)
 const browser = await chromium.launch({ headless: true })
 await mkdir('test-results', { recursive: true })
 const context = await browser.newContext({
@@ -271,6 +292,5 @@ try {
   for (const u of data?.users || [])
     if (u.email === email) await admin.auth.admin.deleteUser(u.id)
   await browser.close()
-  await vite.close()
-  await new Promise((resolve) => backend.close(resolve))
+  next.kill('SIGTERM')
 }

@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import useFetch from '../hooks/useFetch'
+import { moviesHref } from '../lib/navigation'
 import MovieCard from '../components/MovieCard'
 import { Empty, ErrorState, Loading } from '../components/States'
 import Icon from '../components/Icon'
 export default function Movies() {
   const params = useSearchParams()
   const router = useRouter()
-  const setParams = (next) =>
-    router.replace('/movies' + (next.size ? '?' + next : ''), { scroll: false })
+  const setParams = (next) => router.replace(moviesHref(next), { scroll: false })
   const q = params.get('q') || '',
     genre = params.get('genre') || '',
     sort = params.get('sort') || 'popular'
