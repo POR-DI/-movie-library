@@ -1,34 +1,13 @@
-'use client'
-
-import { useState } from 'react'
-import MovieCard from '../components/MovieCard'
-import { getBackdropUrl, selectTrailer } from '../services/tmdb.ts'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-import useFetch from '../hooks/useFetch'
-import { poster, year } from '../lib/api'
+import MovieCard from '../components/MovieCard'
 import LibraryButtons from '../components/LibraryButtons'
-import { ErrorState, Loading } from '../components/States'
+import FallbackImage from '../components/FallbackImage'
+import RefreshButton from '../components/RefreshButton'
+import { getBackdropUrl, selectTrailer } from '../services/tmdb.ts'
+import { poster, year } from '../lib/api'
 import Icon from '../components/Icon'
-export default function MovieDetail() {
-  const { id } = useParams()
-  const [failedPoster, setFailedPoster] = useState(false)
-  const {
-    data: movie,
-    loading,
-    error,
-    retry,
-  } = useFetch('/api/movies/' + encodeURIComponent(id))
-  if (loading) return <Loading />
-  if (error)
-    return (
-      <div className="page">
-        <ErrorState error={error} retry={error.status === 404 ? null : retry} />
-        <Link className="text-link" href="/movies">
-          ← กลับไปสำรวจหนัง
-        </Link>
-      </div>
-    )
+// Server Component: movie is fetched on the server by app/movies/[id]/page.jsx.
+export default function MovieDetail({ movie }) {
   const director = movie.credits?.crew?.find(
     (person) => person.job === 'Director',
   )
@@ -49,15 +28,11 @@ export default function MovieDetail() {
         </Link>
         <div className="detail-grid">
           <div className="detail-poster">
-            {movie.poster_path && !failedPoster ? (
-              <img
-                src={poster(movie.poster_path)}
-                alt={'โปสเตอร์ ' + movie.title}
-                onError={() => setFailedPoster(true)}
-              />
-            ) : (
-              <Icon name="film" size={80} />
-            )}
+            <FallbackImage
+              src={poster(movie.poster_path)}
+              alt={'โปสเตอร์ ' + movie.title}
+              fallback={<Icon name="film" size={80} />}
+            />
           </div>
           <section>
             <span className="eyebrow">EVERY FILM TELLS A STORY</span>
@@ -101,7 +76,7 @@ export default function MovieDetail() {
             {movie.fallbackUnavailable && (
               <p className="notice">
                 โหลดข้อมูลภาษาอังกฤษเพิ่มเติมไม่ได้{' '}
-                <button onClick={retry}>ลองใหม่</button>
+                <RefreshButton>ลองใหม่</RefreshButton>
               </p>
             )}
             {director && (
@@ -110,7 +85,13 @@ export default function MovieDetail() {
               </p>
             )}
             <div className="detail-actions">
-              <LibraryButtons movie={movie} />
+              <LibraryButtons
+                movie={{
+                  id: movie.id,
+                  title: movie.title,
+                  poster_path: movie.poster_path,
+                }}
+              />
               {trailer && (
                 <a
                   className="button secondary"
@@ -143,18 +124,12 @@ export default function MovieDetail() {
               {movie.credits.cast.slice(0, 6).map((person) => (
                 <div className="cast-card" key={person.id}>
                   <div className="cast-image">
-                    {person.profile_path ? (
-                      <img
-                        src={poster(person.profile_path, 'w185')}
-                        alt={person.name}
-                        loading="lazy"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                      />
-                    ) : (
-                      <Icon name="user" size={36} />
-                    )}
+                    <FallbackImage
+                      src={poster(person.profile_path, 'w185')}
+                      alt={person.name}
+                      loading="lazy"
+                      fallback={<Icon name="user" size={36} />}
+                    />
                   </div>
                   <strong>{person.name}</strong>
                   <span>{person.character}</span>
