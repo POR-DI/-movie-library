@@ -3,10 +3,12 @@
 import useFetch from '../hooks/useFetch'
 import MovieCard from './MovieCard'
 import { Empty, ErrorState, Loading } from './States'
-export default function MovieCollection({ category }) {
-  const { data, loading, error, retry } = useFetch(
-    '/api/movies?sort=' + category,
-  )
+// initial: the server-rendered "trending" list; other categories (or a failed server fetch) load here.
+export default function MovieCollection({ category, initial = null }) {
+  const preset = category === 'trending' ? initial : null
+  const fetched = useFetch(preset ? null : '/api/movies?sort=' + category)
+  const { loading, error, retry } = fetched
+  const data = preset || fetched.data
   if (loading) return <Loading cards />
   if (error) return <ErrorState error={error} retry={retry} />
   if (!data?.results.length)

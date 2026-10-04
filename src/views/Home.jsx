@@ -1,24 +1,10 @@
-'use client'
-
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import useFetch from '../hooks/useFetch'
-import MovieCollection from '../components/MovieCollection'
 import { getBackdropUrl } from '../services/tmdb.ts'
+import HeroSearch from '../components/HeroSearch'
+import DiscoveryRoom from '../components/DiscoveryRoom'
 import Icon from '../components/Icon'
-export default function Home() {
-  const [category, setCategory] = useState('trending')
-  const { data: featured } = useFetch('/api/movies/157336')
-  const [query, setQuery] = useState('')
-  const router = useRouter()
-  function search(event) {
-    event.preventDefault()
-    router.push(
-      '/movies' +
-        (query.trim() ? '?q=' + encodeURIComponent(query.trim()) : ''),
-    )
-  }
+// Server Component: data comes from app/page.jsx; search and category tabs are client islands.
+export default function Home({ featured, trending }) {
   return (
     <div className="page home">
       <section className="hero">
@@ -45,19 +31,7 @@ export default function Home() {
             <br />
             ค้นพบ เก็บสะสม และแชร์หนังเรื่องโปรดให้คนที่คุณรัก
           </p>
-          <form className="hero-search" onSubmit={search}>
-            <Icon name="search" />
-            <input
-              aria-label="ค้นหาหนังเรื่องโปรด"
-              placeholder="วันนี้อยากเก็บหนังเรื่องไหน?"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              maxLength={150}
-            />
-            <button className="button primary" type="submit">
-              ค้นหาหนัง <Icon name="arrow" size={17} />
-            </button>
-          </form>
+          <HeroSearch />
           <div className="hero-hint">
             <span>มากกว่าลิสต์หนัง</span>
             <span className="dot-separator">•</span>พื้นที่เล็ก ๆ
@@ -90,25 +64,7 @@ export default function Home() {
             สำรวจหนังทั้งหมด <Icon name="arrow" size={18} />
           </Link>
         </div>
-        <div className="genre-row" aria-label="หมวดภาพยนตร์">
-          {[
-            ['trending', 'Trending'],
-            ['popular', 'Popular'],
-            ['rating', 'Top Rated'],
-            ['now_playing', 'Now Playing'],
-            ['upcoming', 'Upcoming'],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              className={category === id ? 'chip selected' : 'chip'}
-              aria-pressed={category === id}
-              onClick={() => setCategory(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <MovieCollection category={category} />
+        <DiscoveryRoom initial={trending} />
       </section>
       <section className="shelf-invite">
         <div className="invite-icon">
