@@ -2219,6 +2219,13 @@ nav > a:hover {
 }
 .movie-title {
   font-weight: 700;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  line-height: 1.5;
+  min-height: 3em;
+  overflow-wrap: anywhere;
 }
 .save-icon {
   background: #151515de;
@@ -2965,5 +2972,13 @@ nav > a:hover {
   .reference-layout .movie-grid:not(.shelf-grid) {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 18px;
+  }
+}
+
+@media (max-width: 760px) {
+  .poster-wrap,
+  .poster-link,
+  .poster-link img {
+    border-radius: 4px;
   }
 }

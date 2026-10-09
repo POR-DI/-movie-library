@@ -44,7 +44,11 @@ export default function MovieCard({ movie, readOnly = false }) {
         </button>
         {!readOnly && <LibraryButtons movie={movie} compact />}
       </div>
-      <Link className="movie-title" href={'/movies/' + movie.id}>
+      <Link
+        className="movie-title"
+        href={'/movies/' + movie.id}
+        title={movie.title}
+      >
         {movie.title}
       </Link>
       {movie.release_date !== undefined && (
