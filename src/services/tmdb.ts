@@ -1,4 +1,5 @@
 import type { Genre, Movie, MovieDetails, Page, Video } from '../types/tmdb.ts'
+import { LruCache } from '../lib/lruCache.ts'
 const BASE_URL = 'https://api.themoviedb.org/3'
 const IMAGE_URL = 'https://image.tmdb.org/t/p'
 type Params = Record<string, string | number | boolean>
@@ -46,7 +47,7 @@ export function createTmdbService(
   ttl = 300_000,
   apiKey = '',
 ) {
-  const cache = new Map<string, { expires: number; value: unknown }>()
+  const cache = new LruCache<string, unknown>(200, ttl)
   const pending = new Map<string, Promise<unknown>>()
   async function request<T>(path: string, params: Params = {}): Promise<T> {
     if (!token.trim() && !apiKey.trim())
@@ -62,7 +63,7 @@ export function createTmdbService(
     if (apiKey.trim()) url.searchParams.set('api_key', apiKey.trim())
     const key = url.toString()
     const hit = cache.get(key)
-    if (hit && hit.expires > Date.now()) return hit.value as T
+    if (hit !== undefined) return hit as T
     if (pending.has(key)) return pending.get(key) as Promise<T>
     const task = (async () => {
       let response: Response
@@ -105,8 +106,7 @@ export function createTmdbService(
         ('success' in value && value.success === false)
       )
         throw new TmdbError('TMDB ไม่สามารถให้ข้อมูลนี้ได้')
-      if (cache.size >= 200) cache.delete(cache.keys().next().value!)
-      cache.set(key, { value, expires: Date.now() + ttl })
+      cache.set(key, value)
       return value as T
     })()
     pending.set(key, task)
