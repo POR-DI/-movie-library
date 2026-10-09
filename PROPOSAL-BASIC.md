@@ -12,13 +12,13 @@ CineShelf เป็นเว็บไซต์เก็บรายชื่อ�
 
 แสดงภาพยนตร์ทุกประเภทจาก TMDB ไม่จำกัดเฉพาะ Studio Ghibli และไม่มีบริการรับชมหนังเต็มเรื่อง
 
-### การทำตาม Final Project Checklist
+### การทำตามข้อกำหนดโปรเจกต์ปลายภาค
 
 - หน้าแรกเป็น Server Component กำหนด SSR ด้วย `dynamic = 'force-dynamic'` และ `revalidate = 0` ดึงข้อมูลหนังที่กำลังฉายก่อน render แล้วส่งข้อมูลสาธารณะให้ Home Client Component เพื่อใช้ปุ่มและ Context
 - การถูกใจ/อยากดูใช้ `POST /api/library` (Next.js Route Handler) ตรวจข้อมูลด้วย Zod และ token ด้วย Supabase `getUser` ก่อน insert/delete ภายใต้ RLS; server เป็นผู้กำหนด user_id
 - มี react-hook-form + Zod สำหรับฟอร์ม, Context สำหรับ global state และ responsive UI
 - เว็บไซต์ที่ deploy แล้ว: https://movie-library-por24.vercel.app; โค้ดที่แก้ในเครื่องต้องส่งขึ้น deployment ใหม่เพื่อให้ SSR และ Route Handler ใหม่นี้มีผลบนเว็บ
-- รายละเอียดเหตุผล Server/Client และหลักฐานทดสอบอยู่ใน README หัวข้อ Final Project Requirement Checklist
+- รายละเอียดเหตุผล Server/Client และหลักฐานทดสอบอยู่ใน README หัวข้อ รายการตรวจสอบข้อกำหนดโปรเจกต์ปลายภาค
 
 ### Data Structure และการรองรับข้อมูลจำนวนมาก
 
