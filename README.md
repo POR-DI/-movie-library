@@ -72,7 +72,7 @@ Token อยู่ฝั่งเซิร์ฟเวอร์เท่าน�
 
 **ลิงก์ localhost เปิดได้เฉพาะเครื่องตัวเอง** ถ้าอยู่ Wi-Fi เดียวกัน ให้เจ้าของเปิดเว็บผ่าน IP ของเครื่องเจ้าของ เช่น `http://192.168.x.x:5175` ก่อนคัดลอกลิงก์ เครื่องเจ้าของต้องเปิดเซิร์ฟเวอร์และอนุญาตการเชื่อมต่อผ่าน firewall เครือข่ายบางแห่งอาจปิดการติดต่อระหว่างเครื่อง
 
-สำหรับเพื่อนนอกเครือข่าย ต้องนำ Next.js ไป deploy ก่อน (ข้อมูลอยู่ใน Supabase อยู่แล้ว ไม่ต้องมี disk ถาวร) โปรเจกต์นี้ยังไม่ได้ deploy
+เว็บไซต์ที่ deploy แล้ว: https://movie-library-por24.vercel.app (ข้อมูลอยู่ใน Supabase ไม่ต้องมี disk ถาวร)
 
 ```bash
 npm run build
@@ -103,15 +103,15 @@ supabase/
 tests/         unit, TMDB adapter, RLS (Supabase จริง) และ browser checks
 ```
 
-| แนวคิดจากงานเดิม                | ใน CineShelf                                                     |
-| ------------------------------- | ---------------------------------------------------------------- |
-| Components / props / list + key | MovieCard ใช้ซ้ำในหน้าสำรวจ ห้องสมุด และหน้าแชร์                 |
-| useState + controlled inputs    | ช่องค้นหาหน้าแรกและค้นหาในห้องสมุด                               |
-| useEffect + custom hook         | useFetch จัดการ loading / error / cleanup / retry                |
+| แนวคิดจากงานเดิม                | ใน CineShelf                                                      |
+| ------------------------------- | ----------------------------------------------------------------- |
+| Components / props / list + key | MovieCard ใช้ซ้ำในหน้าสำรวจ ห้องสมุด และหน้าแชร์                  |
+| useState + controlled inputs    | ช่องค้นหาหน้าแรกและค้นหาในห้องสมุด                                |
+| useEffect + custom hook         | useFetch จัดการ loading / error / cleanup / retry                 |
 | Next.js App Router              | file-based pages/layout, next/link, next/navigation และ not-found |
-| Context + custom hook           | useAuth / useLibrary ส่งข้อมูลร่วมหลายหน้า                       |
-| react-hook-form + zod           | สมัครสมาชิก / ล็อกอิน / ตั้งค่าโปรไฟล์ ตรวจฟอร์มก่อนส่ง Supabase |
-| เก็บข้อมูลหลัง refresh          | Supabase (Postgres + RLS) รองรับหลายบัญชีและการแชร์ข้ามเครื่อง   |
+| Context + custom hook           | useAuth / useLibrary ส่งข้อมูลร่วมหลายหน้า                        |
+| react-hook-form + zod           | สมัครสมาชิก / ล็อกอิน / ตั้งค่าโปรไฟล์ ตรวจฟอร์มก่อนส่ง Supabase  |
+| เก็บข้อมูลหลัง refresh          | Supabase (Postgres + RLS) รองรับหลายบัญชีและการแชร์ข้ามเครื่อง    |
 
 ### State อยู่ที่ไหน ทำไม
 
@@ -171,7 +171,21 @@ Spotify-inspired three-panel desktop layout: searchable library on the left, dis
 - `src/screens/`: reusable client screen components, rendered by the App Router routes.
 - `src/lib/navigation.jsx`: small helpers using `next/link` and `next/navigation`; no React Router dependency.
 - `server/api.js` and `server/movies.js`: Web Request/Response handler and movie service run inside Next.js Route Handlers; TMDB credentials stay server-side.
-- Supabase auth and RLS-backed library remain unchanged. Public environment names migrated from `VITE_` to `NEXT_PUBLIC_`.
+- Supabase Auth remains client-side; library writes go through `POST /api/library`, which verifies the access token and preserves RLS. Public environment names migrated from `VITE_` to `NEXT_PUBLIC_`.
 - `npm test`: domain, adapter and Route Handler tests. `npm run typecheck` and `npm run build`: Next.js checks.
 
 API request limits are per client when `API_TRUST_PROXY=1`; enable this only with a trusted ingress that overwrites `X-Forwarded-For`. Local development does not trust forwarded headers or use a shared user quota. For production without that ingress, configure per-client limits at the gateway. These in-process limits reset on restart and are not shared across server instances.
+
+## Final Project Requirement Checklist
+
+| Requirement                    | Implementation and reason                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Next.js App Router ≥ 4 routes  | `/`, `/movies`, `/movies/[id]`, `/library`, `/register`, `/login`, `/settings/profile`, `/u/[username]`, `/about`                                                                                                                                                                                                                                                                                      |
+| Server + Client Components     | `src/app/page.jsx` and root layout are Server Components; `src/screens/Home.jsx` and providers are Client Components because they use Context, state and event handlers. Server passes public movie data as serializable props; secrets remain on server.                                                                                                                                              |
+| Explicit SSR data fetching     | Home exports `dynamic = 'force-dynamic'` and `revalidate = 0`; server awaits now-playing TMDB data before rendering. SSR supplies movie titles/posters in initial HTML instead of waiting for browser fetching. Existing instance-local TMDB TTL cache is an upstream optimization, not SSG/ISR page caching. If TMDB is unavailable, the client collection displays fetch failure and supports retry. |
+| Mutation through Route Handler | `POST /api/library`: validates JSON using Zod, verifies token with Supabase `getUser`, derives `user_id` from verified user, and inserts/deletes liked/watchlist under caller RLS. Client keeps optimistic updates and rolls back failures. No service-role key or trusted client user ID.                                                                                                             |
+| Global client state            | AuthContext, LibraryContext and PreviewContext manage session, saved movies and trailer interactions.                                                                                                                                                                                                                                                                                                  |
+| Validated forms                | Register/login and profile forms use react-hook-form + zodResolver. Server independently validates library mutations.                                                                                                                                                                                                                                                                                  |
+| Responsive + Vercel URL        | Desktop three-panel layout and mobile bottom navigation. Live URL: https://movie-library-por24.vercel.app                                                                                                                                                                                                                                                                                              |
+
+Verification: `npm test`, `npm run typecheck`, `npm run build`. Route tests cover missing/expired tokens, invalid input, forged ownership, successful save/delete and safe database errors. Production must have TMDB credentials and `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` configured in Vercel.

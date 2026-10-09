@@ -1,3 +1,4 @@
+'use client'
 import Link from 'next/link'
 import MovieCollection from '../components/MovieCollection'
 import Icon from '../components/Icon'
@@ -18,11 +19,14 @@ const collections = [
   ['now_playing', 'กำลังฉายในโรง', 'ค้นหาเรื่องต่อไปสำหรับคืนดูหนัง'],
   ['upcoming', 'เร็ว ๆ นี้', 'เก็บไว้ในรายการอยากดูก่อนใคร'],
 ]
-export default function Home() {
+export default function Home({ initialReleases = null }) {
   const { likedIds, watchlistIds } = useLibrary()
   const { profile } = useAuth()
   const { preview } = usePreview()
-  const { data: newReleases } = useFetch('/api/movies?sort=now_playing')
+  const { data: newReleases } = useFetch(
+    '/api/movies?sort=now_playing',
+    initialReleases,
+  )
   const featured = newReleases?.results?.[0]
   return (
     <div className="page home spotify-home">
@@ -114,7 +118,10 @@ export default function Home() {
               ดูทั้งหมด
             </Link>
           </div>
-          <MovieCollection category={category} />
+          <MovieCollection
+            category={category}
+            initialData={category === 'now_playing' ? initialReleases : null}
+          />
         </section>
       ))}
       <section className="film-shelf">

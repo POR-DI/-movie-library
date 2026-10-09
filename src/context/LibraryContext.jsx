@@ -10,6 +10,7 @@ import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
 import { toThaiMessage } from '../lib/supabaseErrors'
 import { applyToggle, idsOf, revertToggle } from '../lib/library'
+import { api } from '../lib/api'
 const LibraryContext = createContext(null)
 export function LibraryProvider({ children }) {
   const { user } = useAuth()
@@ -59,14 +60,30 @@ export function LibraryProvider({ children }) {
     // Optimistic: show the change now, undo only this toggle if Supabase rejects it.
     const result = applyToggle(latest.current, movie, kind, user.id)
     commit(result.items)
-    const table = supabase.from('library_items')
-    const { error } =
-      result.action === 'insert'
-        ? await table.upsert(result.row, {
-            onConflict: 'user_id,tmdb_movie_id,kind',
-            ignoreDuplicates: true,
-          })
-        : await table.delete().match(result.row)
+    let error = null
+    try {
+      const { data, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !data.session) {
+        const expired = new Error('กรุณาเข้าสู่ระบบใหม่')
+        expired.status = 401
+        throw expired
+      }
+      await api('/api/library', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + data.session.access_token },
+        body: JSON.stringify({
+          action: result.action,
+          kind,
+          movie: {
+            id: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path ?? null,
+          },
+        }),
+      })
+    } catch (failure) {
+      error = failure
+    }
     setPending((old) => {
       const next = new Set(old)
       next.delete(k)
@@ -79,7 +96,7 @@ export function LibraryProvider({ children }) {
         watchlist: ['เพิ่มในอยากดู', 'นำออกจากอยากดู'],
       }[kind][result.action === 'insert' ? 0 : 1]
       setToggleError(
-        `${verb} ${movie.title} ไม่สำเร็จ: ${toThaiMessage(error)}`,
+        `${verb} ${movie.title} ไม่สำเร็จ: ${error.status ? error.message : toThaiMessage(error)}`,
       )
     }
   }

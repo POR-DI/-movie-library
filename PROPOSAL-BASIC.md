@@ -12,6 +12,14 @@ CineShelf เป็นเว็บไซต์เก็บรายชื่อ�
 
 แสดงภาพยนตร์ทุกประเภทจาก TMDB ไม่จำกัดเฉพาะ Studio Ghibli และไม่มีบริการรับชมหนังเต็มเรื่อง
 
+### การทำตาม Final Project Checklist
+
+- หน้าแรกเป็น Server Component กำหนด SSR ด้วย `dynamic = 'force-dynamic'` และ `revalidate = 0` ดึงข้อมูลหนังที่กำลังฉายก่อน render แล้วส่งข้อมูลสาธารณะให้ Home Client Component เพื่อใช้ปุ่มและ Context
+- การถูกใจ/อยากดูใช้ `POST /api/library` (Next.js Route Handler) ตรวจข้อมูลด้วย Zod และ token ด้วย Supabase `getUser` ก่อน insert/delete ภายใต้ RLS; server เป็นผู้กำหนด user_id
+- มี react-hook-form + Zod สำหรับฟอร์ม, Context สำหรับ global state และ responsive UI
+- เว็บไซต์ที่ deploy แล้ว: https://movie-library-por24.vercel.app; โค้ดที่แก้ในเครื่องต้องส่งขึ้น deployment ใหม่เพื่อให้ SSR และ Route Handler ใหม่นี้มีผลบนเว็บ
+- รายละเอียดเหตุผล Server/Client และหลักฐานทดสอบอยู่ใน README หัวข้อ Final Project Requirement Checklist
+
 ### Data Structure และการรองรับข้อมูลจำนวนมาก
 
 | โครงสร้าง                      | การใช้งานจริง                                                                                                   | ผลต่อการ scale                                                                         |
@@ -51,7 +59,8 @@ LRU ใช้ `src/lib/lruCache.ts` และถูกใช้งานใน T
 | ช่องค้นหาและตัวกรอง            | Client                          | ต้องรับค่าที่ผู้ใช้พิมพ์และเปลี่ยน URL                                                              |
 | ฟอร์มสมัครสมาชิกและเข้าสู่ระบบ | Client                          | ใช้ react-hook-form + zod ตรวจข้อมูลก่อนส่งให้ Supabase Auth                                        |
 | สมัคร/ล็อกอิน/session          | Server (Supabase Auth)          | Supabase จัดการแฮชรหัสผ่านและ session ให้ ไม่ต้องเขียนเอง                                           |
-| อ่าน–เขียนห้องสมุดและโปรไฟล์   | Client → Supabase               | เรียกด้วย Supabase JS + anon key ได้ เพราะสิทธิ์ถูกบังคับด้วย Row Level Security (RLS) ที่ฐานข้อมูล |
+| อ่านห้องสมุด/อ่าน–เขียนโปรไฟล์ | Client → Supabase | เรียกด้วย Supabase JS + anon key ภายใต้ RLS |
+| บันทึกถูกใจ/อยากดู | Client → Next.js Route Handler → Supabase | ตรวจ token และข้อมูลบน server แล้วเขียนด้วยสิทธิ์ผู้ใช้ภายใต้ RLS |
 | ปุ่มถูกใจ/อยากดู               | Client                          | อัปเดตทันทีแบบ optimistic update แล้วบันทึกลง Supabase; ย้อนค่าหากบันทึกล้มเหลว                     |
 | สวิตช์สาธารณะในฟอร์มโปรไฟล์    | Client                          | แก้ค่าในฟอร์มและบันทึกไปยัง Supabase พร้อมแสดงผลสำเร็จหรือข้อผิดพลาด                                |
 
@@ -62,10 +71,10 @@ API ภายในประกอบด้วย `/api/config`, `/api/genres`, 
 ## 4. ข้อมูลมาจากไหน + จุดที่ต้องเขียนข้อมูลกลับ
 
 - **แหล่งข้อมูล:** TMDB API สำหรับข้อมูลหนัง และ **Supabase (PostgreSQL + Auth)** สำหรับบัญชีผู้ใช้ โปรไฟล์ และรายการหนังที่บันทึก
-- **mutation (ผ่าน Supabase JS ภายใต้ RLS):**
+- **mutation (Supabase Auth/JS และ Route Handler ภายใต้ RLS):**
   - สมัครสมาชิก: Supabase Auth สร้างบัญชี แล้ว trigger สร้างแถวใน `profiles` อัตโนมัติ
   - เข้าสู่ระบบ/ออกจากระบบ: สร้างหรือลบ session ของ Supabase Auth
-  - ถูกใจ/เลิกถูกใจ, เพิ่ม/ลบจากอยากดู: insert/delete ใน `library_items`
+  - ถูกใจ/เลิกถูกใจ, เพิ่ม/ลบจากอยากดู: `POST /api/library` ตรวจตัวตนและข้อมูลแล้ว insert/delete ใน `library_items`
   - แก้โปรไฟล์และเปลี่ยนสาธารณะ/ส่วนตัว: update `profiles` (RLS ให้แก้ได้เฉพาะแถวของตัวเอง)
 
 ### การแชร์โปรไฟล์ (แบบ Spotify)

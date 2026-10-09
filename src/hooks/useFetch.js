@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 // R1: shared loading/error state, optional URL, cleanup against stale responses.
-export default function useFetch(url) {
+export default function useFetch(url, initialData = null) {
+  const [seedUrl] = useState(url)
   const [result, setResult] = useState({
-    url: null,
-    data: null,
+    url: initialData ? url : null,
+    data: initialData,
     error: null,
-    loading: true,
+    loading: !initialData,
   })
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
     if (!url) return
+    if (initialData && url === seedUrl && attempt === 0) return
     const controller = new AbortController()
     let active = true
     setResult({ url, data: null, error: null, loading: true })
@@ -25,7 +27,7 @@ export default function useFetch(url) {
       active = false
       controller.abort()
     }
-  }, [url, attempt])
+  }, [url, attempt, initialData, seedUrl])
   function setData(data) {
     setResult({ url, data, error: null, loading: false })
   }
