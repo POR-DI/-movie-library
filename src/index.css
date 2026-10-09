@@ -521,6 +521,7 @@ nav > a:hover {
   gap: 10px;
 }
 .save-icon {
+  padding: 0;
   height: 31px;
   width: 31px;
   border: 1px solid #ffffff48;

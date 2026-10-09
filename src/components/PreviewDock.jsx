@@ -5,7 +5,7 @@ import useFetch from '../hooks/useFetch'
 import { selectTrailer } from '../services/tmdb.ts'
 import Icon from './Icon'
 export default function PreviewDock() {
-  const { movie, close } = usePreview()
+  const { movie, requestId, close } = usePreview()
   const { data, loading, error, retry } = useFetch(
     movie ? '/api/movies/' + movie.id : null,
   )
@@ -13,10 +13,11 @@ export default function PreviewDock() {
   const dialog = useRef(null)
   const trailer = selectTrailer(data?.videos?.results)
   useEffect(() => {
-    setExpanded(false)
-  }, [movie?.id])
+    setExpanded(Boolean(movie))
+  }, [movie?.id, requestId])
   useEffect(() => {
-    if (expanded && dialog.current) dialog.current.showModal()
+    if (expanded && dialog.current && !dialog.current.open)
+      dialog.current.showModal()
   }, [expanded])
   if (!movie)
     return (
@@ -78,7 +79,7 @@ export default function PreviewDock() {
           <Icon name="close" />
         </button>
       </aside>
-      {expanded && trailer && (
+      {expanded && (
         <dialog
           ref={dialog}
           className="trailer-dialog"
@@ -97,20 +98,39 @@ export default function PreviewDock() {
               <Icon name="close" />
             </button>
           </header>
-          <iframe
-            title={'ตัวอย่าง ' + movie.title}
-            src={'https://www.youtube-nocookie.com/embed/' + trailer.key}
-            allow="encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-          />
-          <a
-            className="text-link"
-            href={'https://www.youtube.com/watch?v=' + trailer.key}
-            target="_blank"
-            rel="noreferrer"
-          >
-            เปิดบน YouTube ↗
-          </a>
+          {loading ? (
+            <p role="status">กำลังโหลดตัวอย่าง…</p>
+          ) : error ? (
+            <div className="notice error" role="alert">
+              <p>{error.message}</p>
+              <button className="button secondary small" onClick={retry}>
+                ลองใหม่
+              </button>
+            </div>
+          ) : trailer ? (
+            <>
+              <iframe
+                title={'ตัวอย่าง ' + movie.title}
+                src={
+                  'https://www.youtube-nocookie.com/embed/' +
+                  trailer.key +
+                  '?autoplay=1'
+                }
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
+              />
+              <a
+                className="text-link"
+                href={'https://www.youtube.com/watch?v=' + trailer.key}
+                target="_blank"
+                rel="noreferrer"
+              >
+                เปิดบน YouTube ↗
+              </a>
+            </>
+          ) : (
+            <p role="status">เรื่องนี้ยังไม่มีตัวอย่างหนัง</p>
+          )}
         </dialog>
       )}
     </>
