@@ -8,7 +8,7 @@ const httpUrl = (value) => {
 
 // Returns null instead of letting createClient throw at import time (blank page) on a bad URL.
 export function readSupabaseConfig(env) {
-  const url = env.VITE_SUPABASE_URL?.trim()
-  const anonKey = env.VITE_SUPABASE_ANON_KEY?.trim()
+  const url = env.NEXT_PUBLIC_SUPABASE_URL?.trim()
+  const anonKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
   return url && anonKey && httpUrl(url) ? { url, anonKey } : null
 }

@@ -1,17 +1,15 @@
-// node --env-file=.env tests/browser.mjs  (after npm run build is not required; uses Vite dev server)
+// node --env-file=.env tests/browser.mjs  (after npm run build is not required; uses Next.js dev server)
 // Movie data comes from the server's sample catalog. Accounts and library use the real Supabase
 // project in .env; throwaway users are deleted at the end.
 // Optional: PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
-import { createServer } from 'vite'
+import { spawn } from 'node:child_process'
 import { createClient } from '@supabase/supabase-js'
-import { createApp } from '../server/index.js'
-import { createMovieService } from '../server/movies.js'
 
 for (const name of [
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
 ])
   if (!process.env[name]) {
@@ -20,33 +18,43 @@ for (const name of [
   }
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const admin = createClient(
-  process.env.VITE_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   { auth: { persistSession: false, autoRefreshToken: false } },
 )
 const run = Date.now().toString(36)
 const email = `browser-${run}@example.com`
 const username = 'browser_' + run
-const backend = createApp({ movieService: createMovieService('') })
-await new Promise((resolve, reject) => {
-  backend.once('error', reject)
-  backend.listen(0, '127.0.0.1', resolve)
-})
-const vite = await createServer({
-  server: {
-    host: '127.0.0.1',
-    port: 0,
-    strictPort: false,
-    proxy: {
-      '/api': {
-        target: `http://127.0.0.1:${backend.address().port}`,
-        changeOrigin: false,
-      },
-    },
+const origin = 'http://127.0.0.1:5186'
+const next = spawn(
+  process.execPath,
+  [
+    'node_modules/next/dist/bin/next',
+    'dev',
+    '--port',
+    '5186',
+    '--hostname',
+    '127.0.0.1',
+  ],
+  {
+    stdio: 'inherit',
+    env: { ...process.env, TMDB_READ_TOKEN: '', TMDB_API_KEY: '' },
   },
-})
-await vite.listen()
-const origin = `http://127.0.0.1:${vite.httpServer.address().port}`
+)
+let ready = false
+for (let attempt = 0; attempt < 60; attempt++) {
+  try {
+    if ((await fetch(origin + '/api/config')).ok) {
+      ready = true
+      break
+    }
+  } catch {}
+  await new Promise((resolve) => setTimeout(resolve, 500))
+}
+if (!ready) {
+  next.kill()
+  throw new Error('Next.js test server did not start')
+}
 const browser = await chromium.launch({ headless: true })
 await mkdir('test-results', { recursive: true })
 const context = await browser.newContext({
@@ -101,9 +109,7 @@ try {
   // Register (validation first)
   await page.goto(origin + '/register?next=/movies/157336')
   await page.getByLabel('ชื่อที่แสดง', { exact: true }).fill('Cinema Friend')
-  await page
-    .getByLabel('ชื่อผู้ใช้ (ใช้ในลิงก์โปรไฟล์)')
-    .fill('Browser_' + run)
+  await page.getByLabel('ชื่อผู้ใช้ (ใช้ในลิงก์โปรไฟล์)').fill('Browser_' + run)
   await page.getByLabel('อีเมล', { exact: true }).fill(email)
   await page.getByLabel('รหัสผ่าน', { exact: true }).fill('screen-test-123')
   await page.getByLabel('ยืนยันรหัสผ่าน', { exact: true }).fill('wrong')
@@ -174,9 +180,7 @@ try {
   // Public → guest sees liked only, read-only, even with an uppercase URL
   await page.goto(origin + '/settings/profile')
   await page.getByRole('switch').click()
-  await page
-    .getByRole('switch', { name: 'เปลี่ยนเป็นส่วนตัว' })
-    .waitFor()
+  await page.getByRole('switch', { name: 'เปลี่ยนเป็นส่วนตัว' }).waitFor()
   await friend.goto(origin + '/u/' + username.toUpperCase())
   await friend
     .getByRole('heading', { name: 'หนังที่ Cinema Friend ถูกใจ.' })
@@ -271,6 +275,5 @@ try {
   for (const u of data?.users || [])
     if (u.email === email) await admin.auth.admin.deleteUser(u.id)
   await browser.close()
-  await vite.close()
-  await new Promise((resolve) => backend.close(resolve))
+  next.kill('SIGTERM')
 }

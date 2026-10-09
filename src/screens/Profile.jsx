@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams } from 'next/navigation'
 import { useAuth } from '../context/AuthContext'
 import { fetchProfile } from '../lib/profiles'
 import MovieCard from '../components/MovieCard'

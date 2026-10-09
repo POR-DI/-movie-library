@@ -8,7 +8,14 @@ export async function api(url, options = {}) {
       ...options.headers,
     },
   })
-  const data = await response.json()
+  let data
+  try {
+    data = await response.json()
+  } catch {
+    throw new Error(
+      'เซิร์ฟเวอร์ส่งข้อมูลที่อ่านไม่ได้ กรุณาตรวจว่า API server เปิดอยู่แล้วลองใหม่',
+    )
+  }
   if (!response.ok) {
     const error = new Error(data.error || 'โหลดข้อมูลไม่ได้')
     error.status = response.status

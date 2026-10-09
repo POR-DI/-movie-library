@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom'
+import Link from 'next/link'
 export function NotFound() {
   return (
     <div className="empty not-found">
       <span className="eyebrow">404 · SCENE NOT FOUND</span>
       <h1>ดูเหมือนจะหลงโรงแล้ว</h1>
       <p>ไม่พบหน้าที่คุณกำลังมองหา</p>
-      <Link to="/" className="button primary">
+      <Link href="/" className="button primary">
         กลับหน้าแรก
       </Link>
     </div>
@@ -39,16 +39,26 @@ export function About() {
       </p>
       <h2>ห้องสมุดและการแชร์</h2>
       <p>
-        รายการและบันทึกส่วนตัวเก็บใน localStorage ของเบราว์เซอร์นี้
-        แยกตามบัญชีและผู้เยี่ยมชม คะแนน รีวิว วันที่ดู และเพลย์ลิสต์ไม่ถูกแชร์
-        เมื่อเข้าสู่ระบบและเปิดแชร์ ผู้ที่มีลิงก์จะเห็นชื่อที่แสดงและรายชื่อหนัง
-        โดยไม่เห็นอีเมลหรือข้อมูลบัญชี ปิดแชร์เพื่อยกเลิกลิงก์เดิมได้ทุกเมื่อ
+        Like และรายการอยากดูเก็บใน Supabase แยกตามบัญชี
+        เมื่อเปิดโปรไฟล์เป็นสาธารณะ เพื่อนจะเห็นเฉพาะหนังที่ถูกใจ
+        รายการอยากดูและอีเมลไม่ถูกแชร์
+        เปลี่ยนเป็นส่วนตัวเพื่อปิดการเข้าถึงได้ทุกเมื่อ
+      </p>
+      <h2>ไอคอน</h2>
+      <p>
+        Uicons by{' '}
+        <a
+          href="https://www.flaticon.com/uicons"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Flaticon
+        </a>
       </p>
       <h2>โปรเจกต์เพื่อการเรียนรู้</h2>
       <p>
-        สร้างด้วย React, React Router, Context, custom hooks และ react-hook-form
-        + zod พร้อมเซิร์ฟเวอร์ Node.js และฐานข้อมูล SQLite
-        สำหรับบัญชีและห้องสมุด
+        สร้างด้วย Next.js App Router, React, Context, custom hooks และ react-hook-form
+        + zod โดย API ทำงานผ่าน Next.js Route Handlers และใช้ Supabase สำหรับบัญชีและห้องสมุด
       </p>
     </article>
   )

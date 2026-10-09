@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import Link from 'next/link'
+import { Navigate, useSearchParams } from '../lib/navigation'
 import { useAuth } from '../context/AuthContext'
 import { useLibrary } from '../context/LibraryContext'
 import { itemToMovie } from '../lib/library'
@@ -13,14 +14,27 @@ const tabs = [
 export default function Library() {
   const { user, profile, loading: authLoading } = useAuth()
   const { items, loading, error, retry } = useLibrary()
-  const [tab, setTab] = useState('liked')
+  const [params, setParams] = useSearchParams()
+  const tab = params.get('tab') === 'watchlist' ? 'watchlist' : 'liked'
+  const [sort, setSort] = useState('recent')
   const [query, setQuery] = useState('')
   if (authLoading) return <Loading />
-  if (!user) return <Navigate to="/login?next=/library" replace />
+  if (!user)
+    return (
+      <Navigate
+        href={'/login?next=' + encodeURIComponent('/library?tab=' + tab)}
+        replace
+      />
+    )
   if (!profile)
     return <ErrorState error={new Error('โหลดโปรไฟล์ไม่ได้ กรุณารีเฟรช')} />
   const inTab = items.filter((i) => i.kind === tab)
-  const visible = inTab
+  const visible = [...inTab]
+    .sort((a, b) =>
+      sort === 'title'
+        ? a.title.localeCompare(b.title, 'th')
+        : b.created_at.localeCompare(a.created_at),
+    )
     .filter((i) => i.title.toLowerCase().includes(query.trim().toLowerCase()))
     .map(itemToMovie)
   return (
@@ -29,17 +43,25 @@ export default function Library() {
         <div className="page-heading">
           <span className="eyebrow">@{profile.username}</span>
           <h1>
-            ห้องสมุดของฉัน<span className="accent">.</span>
+            {tab === 'liked' ? 'หนังที่ถูกใจ' : 'รายการอยากดู'}
+            <span className="accent">.</span>
           </h1>
           <p>
             เพื่อนเห็นเฉพาะแท็บ “ถูกใจ” เมื่อโปรไฟล์เป็นสาธารณะ ·{' '}
-            <Link className="text-link" to="/settings/profile">
+            <Link className="text-link" href="/settings/profile">
               {profile.is_public ? 'สาธารณะ' : 'ส่วนตัว'} — ตั้งค่าการแชร์
             </Link>
           </p>
         </div>
       </div>
       <div className="section-heading library-toolbar">
+        <label className="select-label">
+          เรียงตาม
+          <select value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value="recent">เพิ่มล่าสุด</option>
+            <option value="title">ชื่อหนัง</option>
+          </select>
+        </label>
         <div className="genre-row" role="tablist" aria-label="แท็บห้องสมุด">
           {tabs.map(([id, label]) => (
             <button
@@ -47,7 +69,7 @@ export default function Library() {
               role="tab"
               aria-selected={tab === id}
               className={tab === id ? 'chip selected' : 'chip'}
-              onClick={() => setTab(id)}
+              onClick={() => setParams({ tab: id }, { replace: true })}
             >
               {label} ({items.filter((i) => i.kind === id).length})
             </button>

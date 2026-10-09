@@ -70,7 +70,9 @@ export function createTmdbService(
         response = await transport(url, {
           headers: {
             Accept: 'application/json',
-            ...(token.trim() ? { Authorization: `Bearer ${token.trim()}` } : {}),
+            ...(token.trim()
+              ? { Authorization: `Bearer ${token.trim()}` }
+              : {}),
           },
           signal: AbortSignal.timeout(12000),
         })
@@ -181,14 +183,33 @@ export function createTmdbService(
       Math.min(500, Number.parseInt(params.get('page') || '') || 1),
     )
     if (q) return searchMovies(q, page)
-    if (params.get('genre'))
+    const year = params.get('year') || ''
+    const language = params.get('language') || ''
+    if (year && !/^\d{4}$/.test(year))
+      throw new TmdbError('ปีที่ฉายต้องเป็นตัวเลข 4 หลัก')
+    if (language && !/^[a-z]{2}$/.test(language))
+      throw new TmdbError('ภาษาต้นฉบับต้องเป็นรหัสภาษา 2 ตัว')
+    const sorting = params.get('sort')
+    if (
+      params.get('genre') ||
+      year ||
+      language ||
+      sorting === 'newest' ||
+      sorting === 'oldest'
+    )
       return list('/discover/movie', page, {
-        with_genres: params.get('genre')!,
+        ...(params.get('genre') ? { with_genres: params.get('genre')! } : {}),
+        ...(year ? { primary_release_year: year } : {}),
+        ...(language ? { with_original_language: language } : {}),
         sort_by:
-          params.get('sort') === 'rating'
-            ? 'vote_average.desc'
-            : 'popularity.desc',
-        'vote_count.gte': 100,
+          sorting === 'newest'
+            ? 'primary_release_date.desc'
+            : sorting === 'oldest'
+              ? 'primary_release_date.asc'
+              : sorting === 'rating'
+                ? 'vote_average.desc'
+                : 'popularity.desc',
+        ...(sorting === 'rating' ? { 'vote_count.gte': 100 } : {}),
         include_adult: false,
       })
     switch (params.get('sort')) {

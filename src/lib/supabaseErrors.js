@@ -1,4 +1,6 @@
 const byCode = {
+  email_address_invalid:
+    'ระบบไม่ยอมรับอีเมลนี้ กรุณาตรวจสอบหรือใช้อีเมลที่คุณใช้งานจริง',
   user_already_exists: 'อีเมลนี้ถูกใช้งานแล้ว',
   email_exists: 'อีเมลนี้ถูกใช้งานแล้ว',
   invalid_credentials: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',

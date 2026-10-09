@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { signUpAccount } from '../lib/auth'
 import { toThaiMessage } from '../lib/supabaseErrors'
 const AuthContext = createContext(null)
 const columns = 'id, username, display_name, avatar_url, is_public'
@@ -8,13 +9,14 @@ const fail = (error) => {
 }
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(!supabase)
   const [profile, setProfile] = useState(null)
   const [error, setError] = useState(null)
   const user = session?.user
     ? { id: session.user.id, email: session.user.email }
     : null
   useEffect(() => {
+    if (!supabase) return
     // INITIAL_SESSION fires first, so this one listener also covers the initial load.
     const {
       data: { subscription },
@@ -49,17 +51,13 @@ export function AuthProvider({ children }) {
     }
   }, [user?.id])
   async function signUp({ email, password, username, displayName }) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { username, display_name: displayName } },
-    })
-    if (error) fail(error)
-    if (!data.session)
-      throw new Error(
-        'สมัครสำเร็จแต่ยังเข้าสู่ระบบไม่ได้ ตรวจว่าปิด Confirm email ใน Supabase แล้ว',
-      )
+    return signUpAccount(
+      supabase,
+      { email, password, username, displayName },
+      window.location.origin + '/login',
+    )
   }
+
   async function signIn({ email, password }) {
     const { error } = await supabase.auth.signInWithPassword({
       email,

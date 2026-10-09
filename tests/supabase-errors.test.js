@@ -4,6 +4,10 @@ import { toThaiMessage } from '../src/lib/supabaseErrors.js'
 
 test('maps known Supabase errors to Thai', () => {
   const cases = [
+    [
+      { code: 'email_address_invalid' },
+      'ระบบไม่ยอมรับอีเมลนี้ กรุณาตรวจสอบหรือใช้อีเมลที่คุณใช้งานจริง',
+    ],
     [{ code: 'user_already_exists' }, 'อีเมลนี้ถูกใช้งานแล้ว'],
     [{ code: 'email_exists' }, 'อีเมลนี้ถูกใช้งานแล้ว'],
     [{ code: 'invalid_credentials' }, 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'],

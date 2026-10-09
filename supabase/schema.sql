@@ -41,6 +41,9 @@ begin
 end;
 $$;
 
+-- Called by the signup trigger only, never directly through the Data API.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users

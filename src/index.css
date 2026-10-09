@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
-@import 'tailwindcss';
 
 :root {
   font-family: 'Manrope', 'IBM Plex Sans Thai', sans-serif;
@@ -1896,4 +1895,1075 @@ nav > a:hover {
   letter-spacing: normal;
   font-size: 12px;
   line-height: 1.6;
+}
+
+.filter-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+}
+.filter-toolbar select {
+  max-width: 100%;
+}
+@media (max-width: 540px) {
+  .filter-toolbar .select-label {
+    margin-left: 0;
+  }
+}
+
+/* Cinema library: desktop sidebar, horizontal shelves, mobile bottom navigation. */
+:root {
+  --accent: #1ed760;
+  --panel: #181818;
+  --line: #303030;
+  --muted: #a7a7a7;
+  background: #000;
+  color: #fff;
+}
+.cinema-app {
+  padding: 8px;
+  padding-left: 288px;
+  min-height: 100vh;
+  background: #000;
+}
+.cinema-sidebar {
+  position: fixed;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  width: 272px;
+  background: #121212;
+  border-radius: 8px;
+  padding: 26px 18px;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  overflow-y: auto;
+}
+.cinema-sidebar .brand {
+  font-size: 25px;
+  margin-bottom: 32px;
+}
+.cinema-sidebar .brand-icon {
+  background: #1ed760;
+  color: #000;
+  border-radius: 50%;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  height: auto;
+  margin: 0;
+}
+.sidebar-nav > a {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  color: #b3b3b3;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 6px;
+}
+.sidebar-nav > a.active {
+  background: #252525;
+  color: #fff;
+}
+.sidebar-nav > a::after {
+  display: none;
+}
+.sidebar-label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #b3b3b3;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 30px 12px 16px;
+}
+.shelf-shortcut {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 6px;
+}
+.shelf-shortcut:hover,
+.sidebar-film:hover {
+  background: #252525;
+}
+.shelf-cover {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  flex: 0 0 48px;
+}
+.liked-cover {
+  background: linear-gradient(135deg, #5638b8, #b1a5e8);
+  color: #fff;
+}
+.watch-cover {
+  background: linear-gradient(135deg, #075944, #35aa7a);
+  color: #fff;
+}
+.shelf-shortcut strong {
+  font-size: 13px;
+  display: block;
+}
+.shelf-shortcut div > span {
+  font-size: 11px;
+  color: #a7a7a7;
+  display: block;
+  margin-top: 5px;
+}
+.sidebar-invite {
+  margin-top: 18px;
+  padding: 18px 14px;
+  background: #242424;
+  border-radius: 8px;
+}
+.sidebar-invite strong {
+  font-size: 14px;
+}
+.sidebar-invite p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 8px 0 16px;
+  color: #b3b3b3;
+}
+.sidebar-film {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: #b3b3b3;
+  align-items: center;
+}
+.sidebar-film span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.sidebar-about {
+  color: #888;
+  font-size: 10px;
+  margin: auto 12px 0;
+  padding-top: 35px;
+}
+.cinema-content {
+  background: #121212;
+  min-height: calc(100vh - 16px);
+  border-radius: 9px;
+  overflow: hidden;
+}
+.cinema-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 30px;
+  background: #121212ee;
+  position: sticky;
+  top: 0;
+  z-index: 15;
+}
+.topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #252525;
+  color: #aaa;
+  padding: 13px 20px;
+  border-radius: 30px;
+  font-size: 12px;
+}
+.button.primary {
+  background: var(--accent);
+  color: #000;
+  border-radius: 30px;
+  font-weight: 800;
+}
+.button.primary:hover {
+  background: #3be477;
+  transform: scale(1.02);
+}
+.button.secondary {
+  border-radius: 30px;
+  background: #232323;
+  border-color: #555;
+}
+.cinema-content .page {
+  width: calc(100% - 60px);
+  max-width: 1600px;
+}
+.cinema-content .home {
+  padding-top: 18px;
+}
+.home-heading {
+  margin: 28px 0;
+}
+.home-heading h1 {
+  font-size: clamp(25px, 3vw, 43px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin: 8px 0;
+}
+.home-heading p {
+  color: #b3b3b3;
+  font-size: 13px;
+}
+.home-pills {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  border: 0;
+  background: #2b2b2b;
+  color: #eee;
+  border-radius: 30px;
+}
+.chip.selected {
+  background: #fff;
+  color: #111;
+}
+.quick-shelves {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 38px;
+}
+.quick-shelves > a {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: #ffffff12;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.quick-shelves > a:hover {
+  background: #ffffff23;
+}
+.quick-shelves > a > span {
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 82px;
+}
+.quick-shelves strong {
+  font-size: 16px;
+}
+.quick-shelves small {
+  display: block;
+  font-size: 11px;
+  color: #bbb;
+  margin-top: 6px;
+}
+.quick-shelves > a > svg {
+  margin-left: auto;
+  margin-right: 20px;
+}
+.film-shelf {
+  margin: 32px 0 42px;
+}
+.film-shelf .section-heading {
+  margin-bottom: 18px;
+  align-items: center;
+}
+.film-shelf h2 {
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.film-shelf .section-heading p {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+.film-shelf .text-link {
+  color: #aaa;
+  font-size: 12px;
+}
+.home .shelf-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 165px;
+  grid-template-columns: none;
+  overflow-x: auto;
+  padding: 4px 0 18px;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #555 transparent;
+}
+.home .shelf-grid > .movie-card:nth-child(n) {
+  display: block;
+}
+.movie-card {
+  border-radius: 8px;
+  transition: background 0.2s;
+  padding: 10px;
+  margin: -10px 0 0;
+}
+.movie-card:hover,
+.movie-card:focus-within {
+  background: #242424;
+}
+.poster-wrap {
+  box-shadow: 0 8px 18px #0006;
+}
+.movie-title {
+  font-weight: 700;
+}
+.save-icon {
+  background: #151515de;
+}
+.rating {
+  background: #111e;
+}
+.card-preview {
+  position: absolute;
+  right: 10px;
+  bottom: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1ed760;
+  color: #000;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 18px #0008;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  z-index: 3;
+}
+.movie-card:hover .card-preview,
+.movie-card:focus-within .card-preview {
+  opacity: 1;
+  transform: none;
+}
+.card-preview:focus-visible {
+  opacity: 1;
+}
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+.mood-card {
+  padding: 24px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+.mood-card strong {
+  display: block;
+  position: relative;
+  z-index: 1;
+  font-size: 24px;
+  font-weight: 800;
+}
+.mood-card .ui-icon {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  transform: rotate(24deg);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.action {
+  background: #bc3c1b;
+}
+.animation {
+  background: #8642a2;
+}
+.scifi {
+  background: #1e5b84;
+}
+.romance {
+  background: #b02d6e;
+}
+.mobile-nav {
+  display: none;
+}
+.site-footer {
+  font-size: 11px;
+  color: #888;
+  padding: 30px;
+}
+.preview-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 30px;
+  border-top: 1px solid #333;
+  background: #181818;
+  z-index: 40;
+}
+.dock-title {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.dock-title div {
+  min-width: 0;
+}
+.dock-title a {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dock-title span {
+  display: block;
+  font-size: 11px;
+  color: #aaa;
+  margin-top: 5px;
+}
+.round-play {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.dock-close {
+  background: none;
+  color: #aaa;
+  padding: 10px;
+}
+.has-preview {
+  padding-bottom: 88px;
+}
+.has-preview .cinema-sidebar {
+  bottom: 90px;
+}
+.trailer-dialog {
+  margin: auto;
+  width: min(900px, 92vw);
+  padding: 20px;
+  background: #181818;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 12px;
+}
+.trailer-dialog::backdrop {
+  background: #000b;
+}
+.trailer-dialog header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.trailer-dialog header button {
+  padding: 8px;
+  color: #fff;
+  background: #333;
+  border-radius: 50%;
+}
+.trailer-dialog iframe {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 0;
+}
+.trailer-dialog > a {
+  display: block;
+  margin-top: 12px;
+}
+@media (max-width: 1100px) {
+  .cinema-app {
+    padding-left: 228px;
+  }
+  .cinema-sidebar {
+    width: 212px;
+    padding: 22px 10px;
+  }
+  .cinema-topbar {
+    padding: 16px 20px;
+  }
+  .cinema-content .page {
+    width: calc(100% - 40px);
+  }
+  .mood-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .quick-shelves strong {
+    font-size: 13px;
+  }
+}
+@media (max-width: 760px) {
+  .cinema-app {
+    padding: 0 0 75px;
+  }
+  .cinema-sidebar {
+    display: none;
+  }
+  .cinema-content {
+    border-radius: 0;
+  }
+  .cinema-topbar {
+    padding: 14px 18px;
+    gap: 10px;
+  }
+  .topbar-search {
+    background: none;
+    padding: 8px 0;
+  }
+  .topbar-search span {
+    display: none;
+  }
+  .cinema-content .page {
+    width: calc(100% - 36px);
+  }
+  .home-heading h1 {
+    font-size: 27px;
+  }
+  .home-heading p {
+    line-height: 1.7;
+  }
+  .quick-shelves {
+    gap: 8px;
+  }
+  .quick-shelves > a {
+    gap: 9px;
+  }
+  .quick-shelves > a > span {
+    width: 48px;
+    height: 66px;
+    flex-basis: 48px;
+  }
+  .quick-shelves strong {
+    font-size: 11px;
+  }
+  .quick-shelves small {
+    font-size: 9px;
+  }
+  .quick-shelves > a > svg {
+    display: none;
+  }
+  .home .shelf-grid {
+    grid-auto-columns: 145px;
+    gap: 10px;
+  }
+  .film-shelf h2 {
+    font-size: 20px;
+  }
+  .mood-card {
+    height: 120px;
+    padding: 18px;
+  }
+  .mood-card strong {
+    font-size: 20px;
+  }
+  .mood-card .ui-icon {
+    font-size: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+  }
+  .mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    margin: 0;
+    background: #121212f5;
+    z-index: 45;
+    justify-content: space-around;
+    gap: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mobile-nav > a {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: #aaa;
+    width: 33%;
+  }
+  .mobile-nav > a.active {
+    color: #fff;
+  }
+  .mobile-nav > a::after {
+    display: none;
+  }
+  .card-preview {
+    opacity: 1;
+    transform: none;
+    width: 35px;
+    height: 35px;
+  }
+  .preview-dock {
+    bottom: 68px;
+    min-height: 76px;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .has-preview {
+    padding-bottom: 150px;
+  }
+  .dock-title span {
+    font-size: 10px;
+  }
+  .account-nav .text-button {
+    font-size: 10px;
+  }
+  .library-toolbar {
+    justify-content: flex-start;
+  }
+  .library-toolbar .select-label {
+    margin-left: 0;
+  }
+}
+
+.card-preview {
+  bottom: 58px;
+  pointer-events: none;
+}
+.movie-card:hover .card-preview,
+.movie-card:focus-within .card-preview {
+  pointer-events: auto;
+}
+@media (max-width: 760px) {
+  .card-preview {
+    pointer-events: auto;
+  }
+}
+
+/* Spotify-inspired movie workspace: library, discovery, and selected film. */
+.ui-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.reference-layout {
+  padding-top: 80px;
+  padding-bottom: 100px;
+}
+.reference-layout .cinema-topbar {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 72px;
+  z-index: 35;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  gap: 20px;
+}
+.topbar-brand {
+  color: white;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #1db954;
+}
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(600px, 55vw);
+}
+.topbar-home {
+  background: #222;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.reference-layout .topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #242424;
+  border-radius: 30px;
+  padding: 0 16px;
+  height: 48px;
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+}
+.topbar-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: white;
+  padding: 0;
+}
+.topbar-search:focus-within {
+  outline: 2px solid white;
+}
+.topbar-search button {
+  background: transparent;
+  color: #bbb;
+  padding: 5px;
+  display: flex;
+}
+.reference-layout .cinema-sidebar {
+  top: 80px;
+  bottom: 96px;
+  padding: 20px 16px;
+}
+.reference-layout .cinema-sidebar .brand,
+.reference-layout .sidebar-nav {
+  display: none;
+}
+.reference-layout .sidebar-library {
+  border-top: 0;
+  padding-top: 0;
+}
+.sidebar-label {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.create-shelf {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  background: #242424;
+  border-radius: 20px;
+  padding: 8px;
+  color: white;
+}
+.library-filters {
+  display: flex;
+  gap: 5px;
+  margin: 18px 0;
+}
+.library-filters .chip {
+  font-size: 11px;
+  padding: 8px 10px;
+}
+.sidebar-tools {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+.sidebar-tools label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.sidebar-tools input {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: white;
+  font-size: 11px;
+  padding: 6px 0;
+}
+.sidebar-tools select {
+  width: 70px;
+  background: #222;
+  color: #bbb;
+  border: 0;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 6px;
+}
+.now-showing {
+  display: none;
+}
+.featured-release {
+  margin: 32px 0 40px;
+}
+.featured-release > h2 {
+  font-size: 23px;
+  margin-bottom: 20px;
+}
+.featured-body {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.featured-body > img {
+  width: 180px;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.featured-body > div {
+  min-width: 0;
+}
+.featured-body h3 {
+  font-size: 30px;
+  margin: 8px 0 12px;
+}
+.featured-body p {
+  color: #b3b3b3;
+  font-size: 13px;
+  line-height: 1.8;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.featured-body .round-play {
+  margin-top: 18px;
+  background: #1ed760;
+}
+.reference-layout .preview-dock {
+  background: #000;
+  border-top: 0;
+}
+.idle-dock > .ui-icon {
+  color: #1ed760;
+}
+.idle-dock > div {
+  flex: 1;
+}
+.idle-dock span {
+  display: block;
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 6px;
+}
+@media (min-width: 1350px) {
+  .reference-layout {
+    padding-right: 348px;
+  }
+  .now-showing {
+    display: block;
+    position: fixed;
+    right: 8px;
+    top: 80px;
+    bottom: 96px;
+    width: 332px;
+    overflow-y: auto;
+    background: #121212;
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .now-heading {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    font-size: 13px;
+  }
+  .now-art {
+    height: 390px;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+    margin: 0 -18px;
+    padding: 18px;
+  }
+  .now-art h2 {
+    font-size: 25px;
+    line-height: 1.3;
+    margin: 0 0 8px;
+  }
+  .now-art p {
+    font-size: 12px;
+    color: #bbb;
+  }
+  .now-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 12px 0 24px;
+  }
+  .now-actions .save-wrap {
+    position: static;
+  }
+  .now-about h3,
+  .now-related h3 {
+    font-size: 16px;
+    margin: 20px 0 12px;
+  }
+  .now-about p {
+    font-size: 12px;
+    line-height: 1.8;
+    color: #bbb;
+  }
+  .now-about .text-link {
+    font-size: 12px;
+  }
+  .related-film {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    text-align: left;
+    color: white;
+    background: transparent;
+    padding: 9px 0;
+  }
+  .related-film img {
+    width: 42px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  .related-film span {
+    flex: 1;
+    min-width: 0;
+  }
+  .related-film strong {
+    display: block;
+    font-size: 12px;
+  }
+  .related-film small {
+    display: block;
+    color: #aaa;
+    font-size: 10px;
+    margin-top: 6px;
+  }
+}
+@media (max-width: 760px) {
+  .reference-layout {
+    padding-top: 76px;
+    padding-bottom: 160px;
+  }
+  .reference-layout .cinema-topbar {
+    padding: 10px 12px;
+    gap: 10px;
+    height: 68px;
+  }
+  .topbar-brand {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+  .topbar-center {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+  .topbar-home {
+    display: none;
+  }
+  .reference-layout .topbar-search {
+    height: 40px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .topbar-search input {
+    font-size: 11px;
+  }
+  .reference-layout .account-nav .login-link,
+  .reference-layout .account-nav .text-button {
+    display: none;
+  }
+  .reference-layout .account-nav .button {
+    padding: 9px 10px;
+    font-size: 10px;
+  }
+  .featured-body {
+    gap: 14px;
+  }
+  .featured-body > img {
+    width: 110px;
+  }
+  .featured-body h3 {
+    font-size: 22px;
+  }
+  .featured-body p {
+    font-size: 11px;
+    -webkit-line-clamp: 2;
+  }
+  .idle-dock {
+    min-height: 76px;
+  }
+  .idle-dock strong {
+    font-size: 12px;
+  }
+  .idle-dock span {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 760px) {
+  .reference-layout .account-nav button.text-button {
+    display: block;
+    font-size: 10px;
+    padding: 4px;
+  }
+}
+
+/* Keep both rails and the central workspace aligned. */
+@media (min-width: 1350px) {
+  .reference-layout {
+    --rail-width: clamp(260px, 20vw, 332px);
+    padding-left: calc(var(--rail-width) + 16px);
+    padding-right: calc(var(--rail-width) + 16px);
+  }
+  .reference-layout .cinema-sidebar,
+  .reference-layout .now-showing {
+    width: var(--rail-width);
+    top: 80px;
+    bottom: 96px;
+  }
+  .reference-layout .cinema-topbar {
+    display: grid;
+    grid-template-columns: var(--rail-width) minmax(0, 1fr) var(--rail-width);
+    gap: 8px;
+    padding: 12px 8px;
+  }
+  .reference-layout .topbar-brand {
+    margin-left: 16px;
+  }
+  .reference-layout .topbar-center {
+    width: 100%;
+    max-width: 620px;
+    justify-self: center;
+  }
+  .reference-layout .account-nav {
+    justify-self: end;
+    padding-right: 16px;
+  }
+}
+@media (min-width: 761px) {
+  .reference-layout .cinema-content {
+    height: calc(100dvh - 176px);
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .reference-layout .movie-grid:not(.shelf-grid) {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 18px;
+  }
 }

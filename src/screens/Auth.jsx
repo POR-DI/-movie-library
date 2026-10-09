@@ -1,4 +1,6 @@
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import Link from 'next/link'
+import { Navigate, useSearchParams } from '../lib/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuth } from '../context/AuthContext'
@@ -25,19 +27,22 @@ export default function Auth({ register: signUp = false }) {
     resolver: zodResolver(signUp ? registerSchema : loginSchema),
     mode: 'onTouched',
   })
+  const [confirmationPending, setConfirmationPending] = useState(false)
   async function submit(values) {
+    setConfirmationPending(false)
     try {
       if (signUp) {
         if (!(await usernameAvailable(values.username)))
           return setError('username', { message: 'ชื่อผู้ใช้นี้ถูกใช้แล้ว' })
-        await createAccount(values)
+        const result = await createAccount(values)
+        setConfirmationPending(result.confirmationRequired)
       } else await signIn(values)
     } catch (error) {
       setError('root', { message: error.message })
     }
   }
   if (loading) return <Loading />
-  if (user) return <Navigate to={next} replace />
+  if (user) return <Navigate href={next} replace />
   const fields = [
     ...(signUp
       ? [
@@ -140,6 +145,12 @@ export default function Auth({ register: signUp = false }) {
               )}
             </div>
           ))}
+          {confirmationPending && (
+            <p className="notice" role="status">
+              ส่งคำขอสมัครแล้ว กรุณาตรวจอีเมลและกดลิงก์ยืนยันก่อนเข้าสู่ระบบ
+              หากไม่พบให้ตรวจโฟลเดอร์สแปม
+            </p>
+          )}
           {errors.root && (
             <p className="notice error" role="alert">
               {errors.root.message}
@@ -157,7 +168,7 @@ export default function Auth({ register: signUp = false }) {
         <p className="auth-switch">
           {signUp ? 'มีบัญชีแล้ว?' : 'ยังไม่มีห้องสมุดของตัวเอง?'}{' '}
           <Link
-            to={
+            href={
               (signUp ? '/login' : '/register') +
               '?next=' +
               encodeURIComponent(next)

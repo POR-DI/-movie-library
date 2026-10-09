@@ -8,3 +8,9 @@ test-results/
 .env.local
 .env.*.local
 .vercel
+
+.next/
+out/
+*.tsbuildinfo
+
+~$*.docx

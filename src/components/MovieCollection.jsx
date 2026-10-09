@@ -16,8 +16,8 @@ export default function MovieCollection({ category }) {
       />
     )
   return (
-    <div className="movie-grid">
-      {data.results.slice(0, 6).map((movie) => (
+    <div className="movie-grid shelf-grid">
+      {data.results.slice(0, 12).map((movie) => (
         <MovieCard key={movie.id} movie={movie} />
       ))}
     </div>

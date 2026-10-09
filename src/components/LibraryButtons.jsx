@@ -1,4 +1,5 @@
-import { Link, useLocation } from 'react-router-dom'
+import Link from 'next/link'
+import { useLocation } from '../lib/navigation'
 import { useAuth } from '../context/AuthContext'
 import { useLibrary } from '../context/LibraryContext'
 import Icon from './Icon'
@@ -34,7 +35,7 @@ export default function LibraryButtons({ movie, compact = false }) {
           <Link
             key={kind}
             className={cls(false)}
-            to={'/login?next=' + encodeURIComponent(location.pathname)}
+            href={'/login?next=' + encodeURIComponent(location.pathname)}
             aria-label={off + ': ' + movie.title + ' (ต้องเข้าสู่ระบบ)'}
           >
             <Icon name={icon} />

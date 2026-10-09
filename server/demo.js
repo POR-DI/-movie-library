@@ -161,6 +161,7 @@ export const demoMovies = rows.map(
     id,
     title,
     original_title: title,
+    original_language: id === 129 ? 'ja' : id === 496243 ? 'ko' : 'en',
     release_date: year + '-01-01',
     vote_average,
     genre_ids,

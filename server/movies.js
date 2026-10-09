@@ -28,6 +28,12 @@ export function createMovieService(token = '', apiKey = '') {
         Math.min(500, Number.parseInt(params.get('page')) || 1),
       )
       const genre = Number(params.get('genre')) || 0
+      const year = params.get('year') || ''
+      const language = params.get('language') || ''
+      if (year && !/^\d{4}$/.test(year))
+        throw new HttpError(400, 'ปีที่ฉายต้องเป็นตัวเลข 4 หลัก')
+      if (language && !/^[a-z]{2}$/.test(language))
+        throw new HttpError(400, 'ภาษาต้นฉบับต้องเป็นรหัสภาษา 2 ตัว')
       const sort =
         params.get('sort') === 'rating'
           ? 'vote_average.desc'
@@ -35,11 +41,21 @@ export function createMovieService(token = '', apiKey = '') {
       if (mode === 'demo') {
         let results = demoMovies.filter(
           (movie) =>
-            movie.title.toLowerCase().includes(q.toLowerCase()) &&
-            (!genre || movie.genre_ids.includes(genre)),
+            (movie.title.toLowerCase().includes(q.toLowerCase()) ||
+              movie.original_title.toLowerCase().includes(q.toLowerCase())) &&
+            (q ||
+              ((!genre || movie.genre_ids.includes(genre)) &&
+                (!year || movie.release_date.startsWith(year)) &&
+                (!language || movie.original_language === language))),
         )
         if (sort === 'vote_average.desc')
           results = [...results].sort((a, b) => b.vote_average - a.vote_average)
+        if (!q && ['newest', 'oldest'].includes(params.get('sort')))
+          results = [...results].sort((a, b) =>
+            params.get('sort') === 'newest'
+              ? b.release_date.localeCompare(a.release_date)
+              : a.release_date.localeCompare(b.release_date),
+          )
         return {
           mode,
           results: results.slice((page - 1) * 20, page * 20),

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams } from '../lib/navigation'
 import useFetch from '../hooks/useFetch'
 import MovieCard from '../components/MovieCard'
 import { Empty, ErrorState, Loading } from '../components/States'
@@ -9,6 +9,9 @@ export default function Movies() {
   const q = params.get('q') || '',
     genre = params.get('genre') || '',
     sort = params.get('sort') || 'popular'
+  const year = params.get('year') || ''
+  const language = params.get('language') || ''
+  const filtering = Boolean(genre || year || language)
   const [draft, setDraft] = useState(q)
   useEffect(() => setDraft(q), [q])
   useEffect(() => {
@@ -18,6 +21,8 @@ export default function Movies() {
       next.delete('page')
       next.delete('genre')
       next.delete('sort')
+      next.delete('year')
+      next.delete('language')
       if (draft.trim()) next.set('q', draft.trim())
       else next.delete('q')
       setParams(next, { replace: true })
@@ -31,6 +36,8 @@ export default function Movies() {
     genre: q ? '' : genre,
     sort: q ? 'popular' : sort,
     page,
+    year: q ? '' : year,
+    language: q ? '' : language,
   })
   const { data, loading, error, retry } = useFetch(
     searching ? null : '/api/movies?' + query,
@@ -51,6 +58,8 @@ export default function Movies() {
       q: new FormData(event.currentTarget).get('q').trim(),
       genre: '',
       sort: '',
+      year: '',
+      language: '',
     })
   }
   return (
@@ -84,16 +93,92 @@ export default function Movies() {
           >
             <option value="popular">ความนิยม</option>
             <option value="rating">คะแนนสูงสุด</option>
-            <option value="trending">มาแรง</option>
-            <option value="now_playing">กำลังฉาย</option>
-            <option value="upcoming">เร็ว ๆ นี้</option>
+            <option value="newest">ใหม่ไปเก่า</option>
+            <option value="oldest">เก่าไปใหม่</option>
+            <option disabled={filtering} value="trending">
+              มาแรง
+            </option>
+            <option disabled={filtering} value="now_playing">
+              กำลังฉาย
+            </option>
+            <option disabled={filtering} value="upcoming">
+              เร็ว ๆ นี้
+            </option>
           </select>
         </label>
+      </div>
+      <div className="filter-toolbar">
+        <label className="select-label">
+          ปีที่ฉาย
+          <select
+            value={year}
+            disabled={Boolean(q)}
+            onChange={(e) =>
+              update({
+                year: e.target.value,
+                sort: ['popular', 'rating', 'newest', 'oldest'].includes(sort)
+                  ? sort
+                  : 'popular',
+              })
+            }
+          >
+            <option value="">ทุกปี</option>
+            {Array.from(
+              { length: new Date().getFullYear() - 1894 },
+              (_, i) => new Date().getFullYear() + 1 - i,
+            ).map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="select-label">
+          ภาษาต้นฉบับ
+          <select
+            value={language}
+            disabled={Boolean(q)}
+            onChange={(e) =>
+              update({
+                language: e.target.value,
+                sort: ['popular', 'rating', 'newest', 'oldest'].includes(sort)
+                  ? sort
+                  : 'popular',
+              })
+            }
+          >
+            <option value="">ทุกภาษา</option>
+            {[
+              ['th', 'ไทย'],
+              ['en', 'อังกฤษ'],
+              ['ja', 'ญี่ปุ่น'],
+              ['ko', 'เกาหลี'],
+              ['zh', 'จีน'],
+              ['fr', 'ฝรั่งเศส'],
+              ['es', 'สเปน'],
+              ['hi', 'ฮินดี'],
+            ].map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="text-button"
+          onClick={() => {
+            setDraft('')
+            setParams({}, { replace: true })
+          }}
+        >
+          ล้างคำค้นและตัวกรอง
+        </button>
       </div>
       <div className="genre-row" aria-label="ประเภทหนัง">
         <button
           className={!genre ? 'chip selected' : 'chip'}
           disabled={Boolean(q)}
+          aria-pressed={!genre}
           onClick={() => update({ genre: '' })}
         >
           ทั้งหมด
@@ -103,7 +188,15 @@ export default function Movies() {
             key={item.id}
             className={genre === String(item.id) ? 'chip selected' : 'chip'}
             disabled={Boolean(q)}
-            onClick={() => update({ genre: String(item.id) })}
+            aria-pressed={genre === String(item.id)}
+            onClick={() =>
+              update({
+                genre: String(item.id),
+                sort: ['popular', 'rating', 'newest', 'oldest'].includes(sort)
+                  ? sort
+                  : 'popular',
+              })
+            }
           >
             {item.name}
           </button>
@@ -150,7 +243,7 @@ export default function Movies() {
         <Loading cards />
       ) : error ? (
         <ErrorState error={error} retry={retry} />
-      ) : !data.results.length ? (
+      ) : !data?.results.length ? (
         <Empty
           title="ยังไม่เจอเรื่องที่ค้นหา"
           text="ลองใช้ชื่อภาษาอังกฤษ เปลี่ยนคำค้น หรือเลือกประเภทอื่น"
@@ -163,7 +256,7 @@ export default function Movies() {
           ))}
         </div>
       )}
-      {data && data.total_pages > 1 && (
+      {!loading && !searching && !error && data && data.total_pages > 1 && (
         <div className="pagination">
           <button
             className="button secondary"

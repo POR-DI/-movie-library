@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import MovieCard from '../components/MovieCard'
 import { getBackdropUrl, selectTrailer } from '../services/tmdb.ts'
-import { Link, useParams } from 'react-router-dom'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 import useFetch from '../hooks/useFetch'
 import { poster, year } from '../lib/api'
 import LibraryButtons from '../components/LibraryButtons'
 import { ErrorState, Loading } from '../components/States'
 import Icon from '../components/Icon'
+import { usePreview } from '../context/PreviewContext'
 export default function MovieDetail() {
   const { id } = useParams()
+  const { preview } = usePreview()
   const [failedPoster, setFailedPoster] = useState(false)
   const {
     data: movie,
@@ -21,7 +24,7 @@ export default function MovieDetail() {
     return (
       <div className="page">
         <ErrorState error={error} retry={error.status === 404 ? null : retry} />
-        <Link className="text-link" to="/movies">
+        <Link className="text-link" href="/movies">
           ← กลับไปสำรวจหนัง
         </Link>
       </div>
@@ -41,7 +44,7 @@ export default function MovieDetail() {
         />
       )}
       <div className="page detail-content">
-        <Link className="text-link back-link" to="/movies">
+        <Link className="text-link back-link" href="/movies">
           ← กลับไปสำรวจหนัง
         </Link>
         <div className="detail-grid">
@@ -80,7 +83,7 @@ export default function MovieDetail() {
                 <Link
                   className="chip"
                   key={genre.id}
-                  to={'/movies?genre=' + genre.id}
+                  href={'/movies?genre=' + genre.id}
                 >
                   {genre.name}
                 </Link>
@@ -109,15 +112,13 @@ export default function MovieDetail() {
             <div className="detail-actions">
               <LibraryButtons movie={movie} />
               {trailer && (
-                <a
-                  className="button secondary"
-                  href={'https://www.youtube.com/watch?v=' + trailer.key}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  className="button primary"
+                  onClick={() => preview(movie)}
                 >
                   <Icon name="play" />
                   ดูตัวอย่างหนัง
-                </a>
+                </button>
               )}
             </div>
             {movie.id && (

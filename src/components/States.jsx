@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import Link from 'next/link'
 import Icon from './Icon'
 export function Loading({ cards = false }) {
   return cards ? (
@@ -41,7 +41,7 @@ export function Empty({
       <h2>{title}</h2>
       <p>{text}</p>
       {link && (
-        <Link className="button primary" to="/movies">
+        <Link className="button primary" href="/movies">
           ค้นหาหนัง <Icon name="arrow" />
         </Link>
       )}
